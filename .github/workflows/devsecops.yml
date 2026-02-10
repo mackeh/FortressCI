@@ -65,6 +65,7 @@ jobs:
       - name: Upload Security SARIF (CodeQL)
         uses: github/codeql-action/upload-sarif@v3
         if: always()
+        continue-on-error: true
         with:
           sarif_file: semgrep.sarif
 
@@ -101,11 +102,13 @@ jobs:
       - name: Upload Security SARIF (CodeQL)
         uses: github/codeql-action/upload-sarif@v3
         if: always()
+        continue-on-error: true
         with:
           sarif_file: snyk.sarif
 
       - name: Snyk Gatekeeper
         uses: snyk/actions/node@master
+        if: ${{ env.SNYK_TOKEN != '' }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -137,6 +140,7 @@ jobs:
       - name: Upload Security SARIF (CodeQL)
         uses: github/codeql-action/upload-sarif@v3
         if: always()
+        continue-on-error: true
         with:
           sarif_file: checkov.sarif
 
@@ -156,11 +160,12 @@ jobs:
           api-key: ${{ secrets.INFRACOST_API_KEY }}
 
       - name: Infracost Breakdown
+        if: ${{ secrets.INFRACOST_API_KEY != '' }}
         run: |
           infracost breakdown --path ./terraform --format json --out-file infracost-usage.json
           
       - name: Post Infracost Comment
-        if: github.event_name == 'pull_request' && env.INFRACOST_API_KEY != ''
+        if: github.event_name == 'pull_request' && secrets.INFRACOST_API_KEY != ''
         env:
           INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -197,6 +202,7 @@ jobs:
       - name: Upload Security SARIF (CodeQL)
         uses: github/codeql-action/upload-sarif@v3
         if: always()
+        continue-on-error: true
         with:
           sarif_file: trivy-results.sarif
 
