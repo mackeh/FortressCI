@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -46,7 +46,7 @@ jobs:
     if: (github.actor != 'dependabot[bot]')
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Semgrep Scan
         run: semgrep scan --config auto --sarif --output semgrep.sarif
@@ -56,14 +56,14 @@ jobs:
         run: semgrep scan --config auto --error --severity ERROR --severity CRITICAL
 
       - name: Upload SARIF
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: semgrep.sarif
           path: semgrep.sarif
 
       - name: Upload Security SARIF (CodeQL)
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: semgrep.sarif
@@ -73,10 +73,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '16'
 
@@ -92,14 +92,14 @@ jobs:
           args: --severity-threshold=high --sarif-file-output=snyk.sarif
 
       - name: Upload SARIF
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: snyk.sarif
           path: snyk.sarif
       
       - name: Upload Security SARIF (CodeQL)
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: snyk.sarif
@@ -116,7 +116,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Checkov Scan
         uses: bridgecrewio/checkov-action@master
@@ -128,14 +128,14 @@ jobs:
           output_file_path: checkov.sarif
 
       - name: Upload SARIF
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: checkov.sarif
           path: checkov.sarif
 
       - name: Upload Security SARIF (CodeQL)
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: checkov.sarif
@@ -148,10 +148,10 @@ jobs:
       pull-requests: write # Required to post comments
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Infracost
-        uses: infracost/actions/setup@v2
+        uses: infracost/actions/setup@v3
         with:
           api-key: ${{ secrets.INFRACOST_API_KEY }}
 
@@ -160,18 +160,19 @@ jobs:
           infracost breakdown --path ./terraform --format json --out-file infracost-usage.json
           
       - name: Post Infracost Comment
-        uses: infracost/actions/comment@v2
-        if: github.event_name == 'pull_request'
-        with:
-          path: infracost-usage.json
-          behavior: update
+        if: github.event_name == 'pull_request' && env.INFRACOST_API_KEY != ''
+        env:
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+            infracost comment github --path infracost-usage.json --repo $GITHUB_REPOSITORY --pull-request ${{ github.event.pull_request.number }} --behavior update
 
   container-build-sign:
     name: Build & Sign (Trivy + Cosign)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build Docker Image
         run: docker build -t my-app:${{ github.sha }} .
@@ -187,14 +188,14 @@ jobs:
           vuln-type: 'os,library'
 
       - name: Upload SARIF
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: trivy-results.sarif
           path: trivy-results.sarif
 
       - name: Upload Security SARIF (CodeQL)
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: trivy-results.sarif
@@ -220,7 +221,11 @@ jobs:
           if [[ -z "$COSIGN_PRIVATE_KEY" ]]; then
             echo "Skipping signing: COSIGN_PRIVATE_KEY not set."
           else
-            echo "Cosign key detected. Mock signing..."
+            # In a real pipeline, you'd push to a registry first. 
+            # For this demo, we mock the signing step or sign a local tag if supported (Cosign usually needs a registry).
+            echo "Cosign key detected. In a real pipeline, we would run:"
+            echo "cosign sign --key env://COSIGN_PRIVATE_KEY my-registry/my-app:${{ github.sha }}"
+            # To demonstrate, we'll create a dummy signature file
             echo "signature" > cosign.sig
           fi
 
@@ -232,7 +237,7 @@ jobs:
           output: 'sbom.spdx.json'
 
       - name: Upload SBOM
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sbom
           path: sbom.spdx.json
@@ -243,7 +248,7 @@ jobs:
     needs: [container-build-sign]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build & Run Container
         run: |
@@ -255,10 +260,12 @@ jobs:
 
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.9.0
-        continue-on-error: true
+        continue-on-error: true # DAST is noisy; often we want results without blocking initially
         with:
           target: 'http://localhost:3000'
-          fail_action: false
+          fail_action: false # Don't fail the action immediately, check report later
+          
+      # Note: ZAP action outputs artifacts automatically (zap_report.html)
 
   compliance-audit:
     name: Generate Compliance Artifacts
@@ -277,7 +284,7 @@ jobs:
           echo "}" >> deployment-audit.json
 
       - name: Upload Audit Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: deployment-audit
           path: deployment-audit.json
@@ -289,10 +296,12 @@ jobs:
     if: always() && github.event_name == 'pull_request'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download All Artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
+        with:
+           merge-multiple: true
 
       - name: Post Summary to PR
         uses: actions/github-script@v6
