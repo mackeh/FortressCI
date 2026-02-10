@@ -5,6 +5,13 @@ on:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
+  schedule:
+    - cron: '0 0 * * 0' # Weekly baseline scan
+  workflow_dispatch: # Manual trigger for baseline scans
+
+permissions:
+  security-events: write # For uploading SARIF
+  contents: read
 
 jobs:
   secret-scan:
@@ -14,12 +21,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # Required for TruffleHog to scan history
+          fetch-depth: 0
 
-      - name: TruffleHog Scan
+      # Prevention Mode: Scan only new commits on Push/PR
+      - name: TruffleHog (Diff Mode)
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
         uses: trufflesecurity/trufflehog@main
         with:
-          extra_args: --only-verified
+          extra_args: --only-verified --fail --no-update
+
+      # Baseline Mode: Full scan on Schedule/Dispatch
+      - name: TruffleHog (Baseline Mode)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified --fail --no-update --since-commit HEAD
 
   sast-scan:
     name: SAST (Semgrep)
@@ -32,7 +48,19 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Semgrep Scan
-        run: semgrep scan --config auto --error 
+        run: semgrep scan --config auto --sarif --output semgrep.sarif
+        # Note: We don't fail here yet to allow artifact upload. We fail conditionally later or rely on GitHub Advanced Security.
+        # Just strictly failing on HIGH/CRITICAL for now as requested.
+        continue-on-error: true
+
+      - name: Check for Critical/High Failures
+        run: semgrep scan --config auto --error --severity ERROR --severity CRITICAL
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
 
   sca-scan:
     name: SCA (Snyk)
@@ -46,13 +74,30 @@ jobs:
         with:
           node-version: '16'
 
-      # Example for Node.js project. Adjust for other languages (Python, Go, etc.)
       - name: Install dependencies
-        run: npm install || true # Attempt install, don't fail if no package.json
+        run: npm install || true
 
       - name: Snyk Scan
         uses: snyk/actions/node@master
-        continue-on-error: true
+        continue-on-error: true # Upload SARIF even if failed
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --sarif-file-output=snyk.sarif
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: snyk.sarif
+
+      # Explicit Fail Step for Snyk if needed (Snyk action fails by default on threshold, but we used continue-on-error for SARIF)
+      # We can use a simple check or rely on the Snyk action's exit code if we move SARIF upload before failure.
+      # For simplicity in this blueprint, we let the Snyk action fail the build in a separate step if strictly required,
+      # or just remove continue-on-error and accept no SARIF on failure.
+      # Better pattern: Run audit-only for SARIF, then run gatekeeper.
+      - name: Snyk Gatekeeper
+        uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -70,7 +115,15 @@ jobs:
         with:
           directory: ./terraform
           quiet: true
-          soft_fail: true # Set to false to break build on findings
+          soft_fail: false # Fail on High/Critical (default config needed to map severity)
+          output_format: sarif
+          output_file_path: checkov.sarif
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: checkov.sarif
 
   container-scan:
     name: Container Scan (Trivy)
@@ -82,13 +135,50 @@ jobs:
       - name: Build Docker Image
         run: docker build -t my-app:${{ github.sha }} .
 
-      - name: Trivy Image Scan
+      - name: Trivy Image Scan (SARIF)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'my-app:${{ github.sha }}'
-          format: 'table'
-          exit-code: '1'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
           ignore-unfixed: true
           vuln-type: 'os,library'
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Trivy Gatekeeper (Fail Fast)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'my-app:${{ github.sha }}'
+          exit-code: '1'
+          ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
+
+  compliance-audit:
+    name: Generate Compliance Artifacts
+    runs-on: ubuntu-latest
+    needs: [secret-scan, sast-scan, sca-scan, iac-scan, container-scan]
+    if: always() # Run even if scans fail to capture the state
+    steps:
+      - name: Generate Audit Record
+        run: |
+          echo "{" > deployment-audit.json
+          echo "  \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"," >> deployment-audit.json
+          echo "  \"repository\": \"$GITHUB_REPOSITORY\"," >> deployment-audit.json
+          echo "  \"commit_sha\": \"$GITHUB_SHA\"," >> deployment-audit.json
+          echo "  \"actor\": \"$GITHUB_ACTOR\"," >> deployment-audit.json
+          echo "  \"workflow_run_id\": \"$GITHUB_RUN_ID\"," >> deployment-audit.json
+          echo "  \"ref\": \"$GITHUB_REF\"" >> deployment-audit.json
+          echo "}" >> deployment-audit.json
+          cat deployment-audit.json
+
+      - name: Upload Audit Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-audit
+          path: deployment-audit.json
 

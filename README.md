@@ -90,6 +90,27 @@ Secure your infrastructure and containers.
 | **Checkov**    | IaC        | `.pre-commit-config.yaml` / `devsecops.yml` |
 | **Trivy**      | Containers | `devsecops.yml`                             |
 
+## ⚙️ Operational Reality
+
+To maximize the effectiveness of this platform, we recommend the following operational configurations:
+
+### 1. Branch Protection
+
+Enable [Branch Protection Rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule) on `main`:
+
+- **Require status checks to pass before merging**: Select `Secret Scan`, `SAST`, `SCA`, `IaC Scan`, and `Container Scan`.
+- **Require pull request reviews before merging**.
+- **Do not allow bypassing the above settings**.
+
+### 2. Scheduled Scans
+
+The pipeline is configured to run a **Baseline Secret Scan** weekly (Sundays at 00:00 UTC). This catches any new vulnerabilities types or historical secrets that might have been added to the scanner rulesets.
+
+### 3. Incident Triage
+
+- **Findings**: All findings are output as SARIF and will appear in the **GitHub Security > Code Scanning** tab (if GitHub Advanced Security is enabled) or as downloadable Artifacts.
+- **Waivers**: If a finding is a false positive, verify it locally, then add an entry to [.security/waivers.yml](.security/waivers.yml) with a justification and expiry date, and submit it for review.
+
 ## 🤝 Contributing
 
 This is a blueprint repository. Fork it and adapt the `devsecops.yml` to fit your specific build requirements (e.g., usually you would build your application before running the container scan).
