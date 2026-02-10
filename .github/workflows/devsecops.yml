@@ -14,6 +14,7 @@ permissions:
   contents: read
   packages: write # For pushing images/signatures
   id-token: write # For Cosign OIDC (optional)
+  pull-requests: write # For posting comments
 
 jobs:
   secret-scan:
@@ -55,6 +56,13 @@ jobs:
         run: semgrep scan --config auto --error --severity ERROR --severity CRITICAL
 
       - name: Upload SARIF
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: semgrep.sarif
+          path: semgrep.sarif
+
+      - name: Upload Security SARIF (CodeQL)
         uses: github/codeql-action/upload-sarif@v2
         if: always()
         with:
@@ -84,6 +92,13 @@ jobs:
           args: --severity-threshold=high --sarif-file-output=snyk.sarif
 
       - name: Upload SARIF
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: snyk.sarif
+          path: snyk.sarif
+      
+      - name: Upload Security SARIF (CodeQL)
         uses: github/codeql-action/upload-sarif@v2
         if: always()
         with:
@@ -113,10 +128,43 @@ jobs:
           output_file_path: checkov.sarif
 
       - name: Upload SARIF
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: checkov.sarif
+          path: checkov.sarif
+
+      - name: Upload Security SARIF (CodeQL)
         uses: github/codeql-action/upload-sarif@v2
         if: always()
         with:
           sarif_file: checkov.sarif
+
+  cost-estimation:
+    name: FinOps (Infracost)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # Required to post comments
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v2
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Infracost Breakdown
+        run: |
+          infracost breakdown --path ./terraform --format json --out-file infracost-usage.json
+          
+      - name: Post Infracost Comment
+        uses: infracost/actions/comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          path: infracost-usage.json
+          behavior: update
 
   container-build-sign:
     name: Build & Sign (Trivy + Cosign)
@@ -139,6 +187,13 @@ jobs:
           vuln-type: 'os,library'
 
       - name: Upload SARIF
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: trivy-results.sarif
+          path: trivy-results.sarif
+
+      - name: Upload Security SARIF (CodeQL)
         uses: github/codeql-action/upload-sarif@v2
         if: always()
         with:
@@ -165,11 +220,7 @@ jobs:
           if [[ -z "$COSIGN_PRIVATE_KEY" ]]; then
             echo "Skipping signing: COSIGN_PRIVATE_KEY not set."
           else
-            # In a real pipeline, you'd push to a registry first. 
-            # For this demo, we mock the signing step or sign a local tag if supported (Cosign usually needs a registry).
-            echo "Cosign key detected. In a real pipeline, we would run:"
-            echo "cosign sign --key env://COSIGN_PRIVATE_KEY my-registry/my-app:${{ github.sha }}"
-            # To demonstrate, we'll create a dummy signature file
+            echo "Cosign key detected. Mock signing..."
             echo "signature" > cosign.sig
           fi
 
@@ -204,12 +255,10 @@ jobs:
 
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.9.0
-        continue-on-error: true # DAST is noisy; often we want results without blocking initially
+        continue-on-error: true
         with:
           target: 'http://localhost:3000'
-          fail_action: false # Don't fail the action immediately, check report later
-          
-      # Note: ZAP action outputs artifacts automatically (zap_report.html)
+          fail_action: false
 
   compliance-audit:
     name: Generate Compliance Artifacts
@@ -232,3 +281,22 @@ jobs:
         with:
           name: deployment-audit
           path: deployment-audit.json
+
+  pr-feedback:
+    name: Developer Feedback (PR Comments)
+    runs-on: ubuntu-latest
+    needs: [sast-scan, sca-scan, iac-scan, container-build-sign] # Wait for scans to finish
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Post Summary to PR
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const script = require('./.github/scripts/post_summary.js')
+            await script({github, context})
