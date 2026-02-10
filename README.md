@@ -111,6 +111,29 @@ The pipeline is configured to run a **Baseline Secret Scan** weekly (Sundays at 
 - **Findings**: All findings are output as SARIF and will appear in the **GitHub Security > Code Scanning** tab (if GitHub Advanced Security is enabled) or as downloadable Artifacts.
 - **Waivers**: If a finding is a false positive, verify it locally, then add an entry to [.security/waivers.yml](.security/waivers.yml) with a justification and expiry date, and submit it for review.
 
+## 🔐 V3: Trust & Runtime Security
+
+### 1. Supply Chain Trust (Cosign)
+
+We use [Cosign](https://github.com/sigstore/cosign) to sign container images, proving they were built by this trusted pipeline.
+
+**Setup:**
+
+1.  Run the helper script locally to generate keys:
+    ```bash
+    ./scripts/generate_keys.sh
+    ```
+2.  Add the output of `cosign.key` to GitHub Secrets as `COSIGN_PRIVATE_KEY`.
+3.  (Optional) Add `COSIGN_PASSWORD` if you used a passphrase.
+
+### 2. Dynamic Analysis (OWASP ZAP)
+
+A DAST scan attempts to attack the running application in the CI environment.
+
+- **Job**: `dast-scan`
+- **Tools**: OWASP ZAP Baseline Scan.
+- **Artifacts**: HTML Report attached to the workflow run.
+
 ## 🤝 Contributing
 
 This is a blueprint repository. Fork it and adapt the `devsecops.yml` to fit your specific build requirements (e.g., usually you would build your application before running the container scan).

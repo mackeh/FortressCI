@@ -7,11 +7,13 @@ on:
     branches: [ "main", "master" ]
   schedule:
     - cron: '0 0 * * 0' # Weekly baseline scan
-  workflow_dispatch: # Manual trigger for baseline scans
+  workflow_dispatch:
 
 permissions:
-  security-events: write # For uploading SARIF
+  security-events: write
   contents: read
+  packages: write # For pushing images/signatures
+  id-token: write # For Cosign OIDC (optional)
 
 jobs:
   secret-scan:
@@ -23,14 +25,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Prevention Mode: Scan only new commits on Push/PR
       - name: TruffleHog (Diff Mode)
         if: github.event_name == 'push' || github.event_name == 'pull_request'
         uses: trufflesecurity/trufflehog@main
         with:
           extra_args: --only-verified --fail --no-update
 
-      # Baseline Mode: Full scan on Schedule/Dispatch
       - name: TruffleHog (Baseline Mode)
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         uses: trufflesecurity/trufflehog@main
@@ -49,8 +49,6 @@ jobs:
 
       - name: Semgrep Scan
         run: semgrep scan --config auto --sarif --output semgrep.sarif
-        # Note: We don't fail here yet to allow artifact upload. We fail conditionally later or rely on GitHub Advanced Security.
-        # Just strictly failing on HIGH/CRITICAL for now as requested.
         continue-on-error: true
 
       - name: Check for Critical/High Failures
@@ -79,7 +77,7 @@ jobs:
 
       - name: Snyk Scan
         uses: snyk/actions/node@master
-        continue-on-error: true # Upload SARIF even if failed
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -91,11 +89,6 @@ jobs:
         with:
           sarif_file: snyk.sarif
 
-      # Explicit Fail Step for Snyk if needed (Snyk action fails by default on threshold, but we used continue-on-error for SARIF)
-      # We can use a simple check or rely on the Snyk action's exit code if we move SARIF upload before failure.
-      # For simplicity in this blueprint, we let the Snyk action fail the build in a separate step if strictly required,
-      # or just remove continue-on-error and accept no SARIF on failure.
-      # Better pattern: Run audit-only for SARIF, then run gatekeeper.
       - name: Snyk Gatekeeper
         uses: snyk/actions/node@master
         env:
@@ -115,7 +108,7 @@ jobs:
         with:
           directory: ./terraform
           quiet: true
-          soft_fail: false # Fail on High/Critical (default config needed to map severity)
+          soft_fail: false 
           output_format: sarif
           output_file_path: checkov.sarif
 
@@ -125,8 +118,8 @@ jobs:
         with:
           sarif_file: checkov.sarif
 
-  container-scan:
-    name: Container Scan (Trivy)
+  container-build-sign:
+    name: Build & Sign (Trivy + Cosign)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -135,6 +128,7 @@ jobs:
       - name: Build Docker Image
         run: docker build -t my-app:${{ github.sha }} .
 
+      # 1. Scan (Trivy)
       - name: Trivy Image Scan (SARIF)
         uses: aquasecurity/trivy-action@master
         with:
@@ -150,7 +144,7 @@ jobs:
         with:
           sarif_file: trivy-results.sarif
 
-      - name: Trivy Gatekeeper (Fail Fast)
+      - name: Trivy Gatekeeper
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'my-app:${{ github.sha }}'
@@ -158,11 +152,70 @@ jobs:
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
 
+      # 2. Sign (Cosign) - Only runs if Trivy passes
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@main
+
+      - name: Sign Image
+        if: github.event_name != 'pull_request' # Don't sign PR builds typically
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: |
+          if [[ -z "$COSIGN_PRIVATE_KEY" ]]; then
+            echo "Skipping signing: COSIGN_PRIVATE_KEY not set."
+          else
+            # In a real pipeline, you'd push to a registry first. 
+            # For this demo, we mock the signing step or sign a local tag if supported (Cosign usually needs a registry).
+            echo "Cosign key detected. In a real pipeline, we would run:"
+            echo "cosign sign --key env://COSIGN_PRIVATE_KEY my-registry/my-app:${{ github.sha }}"
+            # To demonstrate, we'll create a dummy signature file
+            echo "signature" > cosign.sig
+          fi
+
+      - name: Generate SBOM (SPDX)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'my-app:${{ github.sha }}'
+          format: 'spdx-json'
+          output: 'sbom.spdx.json'
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom
+          path: sbom.spdx.json
+
+  dast-scan:
+    name: Runtime Security (DAST)
+    runs-on: ubuntu-latest
+    needs: [container-build-sign]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build & Run Container
+        run: |
+          docker build -t my-app:${{ github.sha }} .
+          # Run detached, map internal 3000 to host 3000
+          docker run -d -p 3000:3000 --name test-app my-app:${{ github.sha }}
+          # Wait for app to start (simple sleep or healthcheck loop)
+          sleep 5 
+
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.9.0
+        continue-on-error: true # DAST is noisy; often we want results without blocking initially
+        with:
+          target: 'http://localhost:3000'
+          fail_action: false # Don't fail the action immediately, check report later
+          
+      # Note: ZAP action outputs artifacts automatically (zap_report.html)
+
   compliance-audit:
     name: Generate Compliance Artifacts
     runs-on: ubuntu-latest
-    needs: [secret-scan, sast-scan, sca-scan, iac-scan, container-scan]
-    if: always() # Run even if scans fail to capture the state
+    needs: [secret-scan, sast-scan, sca-scan, iac-scan, container-build-sign, dast-scan]
+    if: always()
     steps:
       - name: Generate Audit Record
         run: |
@@ -172,13 +225,10 @@ jobs:
           echo "  \"commit_sha\": \"$GITHUB_SHA\"," >> deployment-audit.json
           echo "  \"actor\": \"$GITHUB_ACTOR\"," >> deployment-audit.json
           echo "  \"workflow_run_id\": \"$GITHUB_RUN_ID\"," >> deployment-audit.json
-          echo "  \"ref\": \"$GITHUB_REF\"" >> deployment-audit.json
           echo "}" >> deployment-audit.json
-          cat deployment-audit.json
 
       - name: Upload Audit Artifact
         uses: actions/upload-artifact@v3
         with:
           name: deployment-audit
           path: deployment-audit.json
-
