@@ -2,6 +2,8 @@
 
 FortressCI is a secure-by-default DevSecOps platform blueprint designed to implement "Shift Left" security, automated pipelines, and infrastructure protection. It integrates best-in-class open source security tools to ensure your code and infrastructure are secure from day one.
 
+> **[View our Roadmap](ROADMAP.md)** for upcoming features and long-term vision.
+
 ## 🚀 Features
 
 ### Phase 1: Shift Left (Local Development)
