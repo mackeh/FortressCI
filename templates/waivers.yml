@@ -1,0 +1,18 @@
+# Security Waivers Configuration
+# Use this file to document accepted risks or false positives.
+# All waivers must have an expiry date.
+
+waivers:
+  - id: "CVE-2023-12345"
+    scanner: "snyk"
+    severity: "high"
+    justification: "Vulnerability is in a dev-dependency not used in production."
+    expires_on: "2024-12-31"
+    approved_by: "@security-team"
+
+  - id: "terraform-aws-s3-bucket-public"
+    scanner: "checkov"
+    resource: "aws_s3_bucket.public_assets"
+    justification: "This bucket is intentionally public for hosting static website assets."
+    expires_on: "2024-12-31"
+    approved_by: "@infra-lead"

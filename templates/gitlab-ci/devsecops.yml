@@ -1,0 +1,57 @@
+stages: [secret-scan, sast, sca, iac-scan, container-scan, dast]
+
+variables:
+  SECURE_LOG_LEVEL: "debug"
+
+secret-scan:
+  stage: secret-scan
+  image: trufflesecurity/trufflehog:latest
+  script:
+    - trufflehog git file://. --since-commit HEAD~1 --fail
+  allow_failure: true
+
+sast:
+  stage: sast
+  image: returntocorp/semgrep
+  script:
+    - semgrep --config auto --sarif -o semgrep.sarif .
+  artifacts:
+    reports:
+      sast: semgrep.sarif
+    paths:
+      - semgrep.sarif
+  allow_failure: true
+
+sca:
+  stage: sca
+  image: snyk/snyk:node
+  script:
+    - snyk test --json > snyk.json
+  artifacts:
+    paths:
+      - snyk.json
+  allow_failure: true
+
+iac-scan:
+  stage: iac-scan
+  image: bridgecrew/checkov:latest
+  script:
+    - checkov -d . --output-file-path checkov.sarif --output sarif
+  artifacts:
+    paths:
+      - checkov.sarif
+  allow_failure: true
+
+container-scan:
+  stage: container-scan
+  image: docker:stable
+  services:
+    - docker:dind
+  script:
+    - docker build -t my-app:$CI_COMMIT_SHA .
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --format sarif --output trivy.sarif my-app:$CI_COMMIT_SHA
+  artifacts:
+    reports:
+      container_scanning: trivy.sarif
+    paths:
+      - trivy.sarif
