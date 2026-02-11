@@ -1,0 +1,25 @@
+# Generated scan results
+results-*/
+report.html
+
+# Secrets and keys
+*.key
+*.pem
+cosign.*
+!cosign.pub
+
+# Environment
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/

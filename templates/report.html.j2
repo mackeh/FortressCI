@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FortressCI Security Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-primary: #3b82f6;
+            --border-color: #334155;
+            
+            --sev-critical: #ef4444;
+            --sev-high: #f97316;
+            --sev-medium: #eab308;
+            --sev-low: #3b82f6;
+            --sev-info: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .timestamp {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-title {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+        }
+
+        .text-critical { color: var(--sev-critical); }
+        .text-high { color: var(--sev-high); }
+        .text-medium { color: var(--sev-medium); }
+        .text-low { color: var(--sev-low); }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .findings-section {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        input, select {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus {
+            outline: 2px solid var(--accent-primary);
+            border-color: transparent;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9375rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .badge-tool { background-color: rgba(255, 255, 255, 0.1); }
+
+        .badge-critical { background-color: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .badge-high { background-color: rgba(249, 115, 22, 0.2); color: #fdba74; }
+        .badge-medium { background-color: rgba(234, 179, 8, 0.2); color: #fde047; }
+        .badge-low { background-color: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+
+        .file-location {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        .waived {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>FortressCI Report</h1>
+            <div class="timestamp">Generated on: {{ generated_at }}</div>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="card stat-card">
+                <div class="stat-title">Total Findings</div>
+                <div class="stat-value">{{ total }}</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-title">Critical</div>
+                <div class="stat-value text-critical">{{ critical }}</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-title">High</div>
+                <div class="stat-value text-high">{{ high }}</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-title">Medium</div>
+                <div class="stat-value text-medium">{{ medium }}</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+             <div class="card">
+                <div class="stat-title">Findings by Tool</div>
+                <div class="chart-container">
+                    <canvas id="toolChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <div class="stat-title">Severity Distribution</div>
+                <div class="chart-container">
+                    <canvas id="severityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="findings-section">
+            <div class="table-controls">
+                <input type="text" id="searchInput" placeholder="Search findings..." onkeyup="filterTable()">
+                <select id="severityFilter" onchange="filterTable()">
+                    <option value="all">All Severities</option>
+                    <option value="critical">Critical</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select>
+                <select id="toolFilter" onchange="filterTable()">
+                    <option value="all">All Tools</option>
+                    {% for tool in tools %}
+                    <option value="{{ tool }}">{{ tool }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {% if total == 0 %}
+            <div class="empty-state">
+                <h2>🎉 No issues found!</h2>
+                <p>Your codebase is squeaky clean.</p>
+            </div>
+            {% else %}
+            <div style="overflow-x: auto;">
+                <table id="findingsTable">
+                    <thead>
+                        <tr>
+                            <th>Severity</th>
+                            <th>Tool</th>
+                            <th>Description</th>
+                            <th>Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for finding in findings %}
+                        <tr class="finding-row {{ 'waived' if finding.waived else '' }}" data-severity="{{ finding.severity | lower }}" data-tool="{{ finding.tool }}">
+                            <td>
+                                <span class="badge badge-{{ finding.severity | lower }}">{{ finding.severity }}</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-tool">{{ finding.tool }}</span>
+                            </td>
+                            <td>
+                                <div style="font-weight: 500;">{{ finding.message }}</div>
+                                {% if finding.waived %}
+                                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                    Waived: {{ finding.waiver_reason }}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="file-location">{{ finding.file }}:{{ finding.line }}</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Charts
+        const toolData = {{ tool_counts | tojson }};
+        const ctxTool = document.getElementById('toolChart').getContext('2d');
+        new Chart(ctxTool, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(toolData),
+                datasets: [{
+                    data: Object.values(toolData),
+                    backgroundColor: ['#60a5fa', '#34d399', '#f472b6', '#a78bfa', '#fbbf24'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { color: '#94a3b8' } }
+                }
+            }
+        });
+
+        const sevData = {
+            critical: {{ critical }},
+            high: {{ high }},
+            medium: {{ medium }},
+            low: {{ low }}
+        };
+        const ctxSev = document.getElementById('severityChart').getContext('2d');
+        new Chart(ctxSev, {
+            type: 'bar',
+            data: {
+                labels: ['Critical', 'High', 'Medium', 'Low'],
+                datasets: [{
+                    label: 'Count',
+                    data: [sevData.critical, sevData.high, sevData.medium, sevData.low],
+                    backgroundColor: ['#ef4444', '#f97316', '#eab308', '#3b82f6'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Filter Logic
+        function filterTable() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const sevFilter = document.getElementById('severityFilter').value;
+            const toolFilter = document.getElementById('toolFilter').value;
+            const rows = document.getElementsByClassName('finding-row');
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const text = row.innerText.toLowerCase();
+                const sev = row.getAttribute('data-severity');
+                const tool = row.getAttribute('data-tool');
+
+                const matchesSearch = text.includes(filter);
+                const matchesSev = sevFilter === 'all' || sev === sevFilter;
+                const matchesTool = toolFilter === 'all' || tool === toolFilter;
+
+                if (matchesSearch && matchesSev && matchesTool) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
