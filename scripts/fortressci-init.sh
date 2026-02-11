@@ -112,9 +112,16 @@ mkdir -p .security
 cp "$TEMPLATES_DIR/waivers.yml" .security/waivers.yml
 echo "✅ Generated .security/waivers.yml"
 
+if [ ! -f ".fortressci.yml" ]; then
+    cp "$TEMPLATES_DIR/fortressci.yml" .fortressci.yml
+    echo "✅ Generated .fortressci.yml (thresholds & scanner config)"
+fi
+
 echo ""
 echo "🎉 FortressCI setup complete!"
 echo "Next steps:"
 echo "1. Review the generated configuration files."
 echo "2. Install pre-commit hooks: 'pre-commit install'"
 echo "3. Add necessary secrets (SNYK_TOKEN, etc.) to your CI platform."
+echo "4. Adjust severity thresholds in .fortressci.yml"
+echo "5. Manage waivers: scripts/fortressci-waiver.sh help"

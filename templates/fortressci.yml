@@ -1,0 +1,46 @@
+# FortressCI Configuration
+# Controls scan thresholds, waiver policy, and tool settings.
+
+thresholds:
+  # Pipeline fails if findings at this severity or above exist (after waivers applied)
+  # Options: critical | high | medium | low | none
+  fail_on: critical
+
+  # Pipeline warns (non-blocking) at this severity
+  warn_on: high
+
+waivers:
+  # Require approval field on every waiver entry
+  require_approval: true
+
+  # Maximum days a waiver can be valid before it must be renewed
+  max_expiry_days: 90
+
+  # Path to waivers file
+  path: .security/waivers.yml
+
+scanners:
+  secrets:
+    enabled: true
+    tool: trufflehog
+
+  sast:
+    enabled: true
+    tool: semgrep
+    config: auto
+
+  sca:
+    enabled: true
+    tool: snyk
+
+  iac:
+    enabled: true
+    tool: checkov
+
+  container:
+    enabled: true
+    tool: trivy
+
+  dast:
+    enabled: false
+    tool: zap

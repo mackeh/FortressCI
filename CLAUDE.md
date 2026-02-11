@@ -15,7 +15,7 @@ docker build -t fortressci/scan .
 # Run all scans locally via Docker (outputs to ./results/)
 docker run --rm -v $(pwd):/workspace -v $(pwd)/results:/results fortressci/scan /workspace
 
-# Run the interactive setup wizard (generates CI config, pre-commit hooks, waivers)
+# Run the interactive setup wizard (generates CI config, pre-commit hooks, waivers, thresholds)
 ./scripts/fortressci-init.sh
 ./scripts/fortressci-init.sh --ci github-actions  # skip interactive prompts
 
@@ -23,10 +23,19 @@ docker run --rm -v $(pwd):/workspace -v $(pwd)/results:/results fortressci/scan 
 pre-commit install
 
 # Generate HTML report from scan results
-python3 scripts/generate-report.py
+python3 scripts/generate-report.py <results_dir>
 
-# Generate SARIF summary statistics
-python3 scripts/summarize.py
+# Generate summary.json with severity breakdowns
+python3 scripts/summarize.py <results_dir>
+
+# Check findings against configured thresholds
+./scripts/check-thresholds.sh <results_dir> [.fortressci.yml]
+
+# Manage security waivers
+./scripts/fortressci-waiver.sh add --id "CVE-..." --scanner snyk --severity high \
+  --reason "Dev-only" --expires 2026-06-01 --author "@name"
+./scripts/fortressci-waiver.sh list
+./scripts/fortressci-waiver.sh expire
 
 # Generate Cosign signing keys
 ./scripts/generate_keys.sh
@@ -54,7 +63,10 @@ There are no unit tests or linters — this is a blueprint/template project, not
 | `scripts/fortressci-init.sh` | Interactive setup wizard CLI (Bash) |
 | `scripts/run-all.sh` | Docker entrypoint — orchestrates all 5 scans sequentially |
 | `scripts/generate-report.py` | Parses SARIF+JSON → HTML report via Jinja2 |
-| `scripts/summarize.py` | Aggregates scan results into summary statistics |
+| `scripts/summarize.py` | Aggregates scan results into summary.json with per-tool severity counts |
+| `scripts/check-thresholds.sh` | Gating script — fails pipeline if findings exceed .fortressci.yml thresholds |
+| `scripts/fortressci-waiver.sh` | CLI for managing waivers (add/list/expire/remove) |
+| `.fortressci.yml` | Project config: severity thresholds, waiver policy, scanner toggles |
 | `.github/workflows/devsecops.yml` | Primary GitHub Actions pipeline |
 | `.github/scripts/post_summary.js` | Posts security summary as PR comment |
 | `.security/waivers.yml` | Approved security finding exceptions (with expiry dates) |

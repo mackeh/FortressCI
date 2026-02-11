@@ -39,10 +39,12 @@ RUN curl -sSfL https://github.com/sigstore/cosign/releases/latest/download/cosig
 COPY scripts/run-all.sh /usr/local/bin/fortressci-scan
 COPY scripts/summarize.py /usr/local/bin/summarize.py
 COPY scripts/generate-report.py /usr/local/bin/generate-report.py
+COPY scripts/check-thresholds.sh /usr/local/bin/check-thresholds.sh
+COPY scripts/fortressci-waiver.sh /usr/local/bin/fortressci-waiver
 COPY templates/ /templates/
 
 # Set permissions
-RUN chmod +x /usr/local/bin/fortressci-scan
+RUN chmod +x /usr/local/bin/fortressci-scan /usr/local/bin/check-thresholds.sh /usr/local/bin/fortressci-waiver
 
 # Create results directory
 RUN mkdir -p /results

@@ -3,6 +3,7 @@ import sys
 import os
 from pathlib import Path
 
+
 def load_json(path):
     try:
         with open(path) as f:
@@ -10,37 +11,61 @@ def load_json(path):
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
 
+
+def empty_severity():
+    return {"critical": 0, "high": 0, "medium": 0, "low": 0}
+
+
 def summarize_trufflehog(path):
-    data = load_json(path)
-    # TruffleHog output is a stream of JSON objects, need to handle that if strictly following that format.
-    # For now, assuming standard JSON array or line-delimited.
-    # If line delimited:
-    count = 0
+    counts = empty_severity()
     try:
         with open(path, 'r') as f:
             for line in f:
                 if line.strip():
-                    count += 1
+                    # All secrets are critical
+                    counts["critical"] += 1
     except FileNotFoundError:
         pass
-    return count
+    return counts
+
+
+def map_sarif_level(level):
+    mapping = {
+        "error": "high",
+        "warning": "medium",
+        "note": "low",
+        "none": "low",
+    }
+    return mapping.get(level, "medium")
+
 
 def summarize_sarif(path):
+    counts = empty_severity()
     data = load_json(path)
-    count = 0
     for run in data.get("runs", []):
-        count += len(run.get("results", []))
-    return count
+        for result in run.get("results", []):
+            level = result.get("level", "warning")
+            severity = map_sarif_level(level)
+            counts[severity] += 1
+    return counts
+
 
 def summarize_snyk(path):
+    counts = empty_severity()
     data = load_json(path)
-    # Snyk can return a list or dict
-    if isinstance(data, list):
-        count = 0
-        for project in data:
-            count += len(project.get("vulnerabilities", []))
-        return count
-    return len(data.get("vulnerabilities", []))
+    if isinstance(data, dict):
+        data = [data]
+    for project in data:
+        for vuln in project.get("vulnerabilities", []):
+            sev = vuln.get("severity", "low").lower()
+            if sev in counts:
+                counts[sev] += 1
+    return counts
+
+
+def total_for(counts):
+    return sum(counts.values())
+
 
 def main():
     if len(sys.argv) < 2:
@@ -48,34 +73,64 @@ def main():
         sys.exit(1)
 
     results_dir = Path(sys.argv[1])
-    
+
+    tools = {}
+    tools["trufflehog"] = summarize_trufflehog(results_dir / "secrets.json")
+    tools["semgrep"] = summarize_sarif(results_dir / "sast.sarif")
+    tools["snyk"] = summarize_snyk(results_dir / "sca.json")
+
+    # Checkov output name varies
+    if (results_dir / "results_sarif.sarif").exists():
+        tools["checkov"] = summarize_sarif(results_dir / "results_sarif.sarif")
+    elif (results_dir / "checkov.sarif").exists():
+        tools["checkov"] = summarize_sarif(results_dir / "checkov.sarif")
+    else:
+        tools["checkov"] = empty_severity()
+
+    tools["trivy"] = summarize_sarif(results_dir / "container.sarif")
+
+    # Aggregate totals across all tools
+    totals = empty_severity()
+    for tool_counts in tools.values():
+        for sev, count in tool_counts.items():
+            totals[sev] += count
+
     summary = {
-        "secrets": summarize_trufflehog(results_dir / "secrets.json"),
-        "sast": summarize_sarif(results_dir / "sast.sarif"),
-        "sca": summarize_snyk(results_dir / "sca.json"),
-        "iac": summarize_sarif(results_dir / "results_sarif.sarif"), # Checkov output name might vary
-        "container": summarize_sarif(results_dir / "container.sarif")
+        "tools": tools,
+        "totals": totals,
+        "total_findings": sum(totals.values()),
     }
-    
-    # Checkov specific adjustment if filename differs
-    if not (results_dir / "results_sarif.sarif").exists() and (results_dir / "checkov.sarif").exists():
-         summary["iac"] = summarize_sarif(results_dir / "checkov.sarif")
 
+    # Write structured JSON for downstream tools (check-thresholds, PR comments)
+    summary_path = results_dir / "summary.json"
+    with open(summary_path, "w") as f:
+        json.dump(summary, f, indent=2)
+
+    # Print human-readable summary
     print("\n📊 Scan Summary")
-    print("----------------")
-    print(f"🔑 Secrets:    {summary['secrets']}")
-    print(f"🐛 SAST Issues: {summary['sast']}")
-    print(f"📦 Dependencies: {summary['sca']}")
-    print(f"🏗️ IaC Issues:  {summary['iac']}")
-    print(f"🐳 Container:    {summary['container']}")
-    print("----------------")
-    
-    total = sum(summary.values())
-    print(f"Total Findings: {total}")
+    print("=" * 45)
+    print(f"{'Tool':<14} {'Crit':>5} {'High':>5} {'Med':>5} {'Low':>5} {'Total':>6}")
+    print("-" * 45)
+    for tool, counts in tools.items():
+        t = total_for(counts)
+        print(f"{tool:<14} {counts['critical']:>5} {counts['high']:>5} {counts['medium']:>5} {counts['low']:>5} {t:>6}")
+    print("-" * 45)
+    t = summary["total_findings"]
+    print(f"{'TOTAL':<14} {totals['critical']:>5} {totals['high']:>5} {totals['medium']:>5} {totals['low']:>5} {t:>6}")
+    print()
 
-    if total > 0:
+    if totals["critical"] > 0:
+        print(f"\u274c {totals['critical']} critical finding(s) detected!")
+    if totals["high"] > 0:
+        print(f"\u26a0\ufe0f  {totals['high']} high finding(s) detected!")
+
+    print(f"\n\u2139\ufe0f  Summary written to {summary_path}")
+
+    # Exit code based on whether any findings exist
+    if summary["total_findings"] > 0:
         sys.exit(1)
     sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

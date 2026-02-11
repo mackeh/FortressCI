@@ -44,9 +44,16 @@ if [ -f "/usr/local/bin/generate-report.py" ]; then
     python3 /usr/local/bin/generate-report.py $RESULTS_DIR || echo "Failed to generate report"
 fi
 
-# Generate unified summary
+# Generate unified summary (produces summary.json)
 if [ -f "/usr/local/bin/summarize.py" ]; then
-    python3 /usr/local/bin/summarize.py $RESULTS_DIR
+    python3 /usr/local/bin/summarize.py $RESULTS_DIR || true
 else
     echo "Summary script not found."
+fi
+
+# Run threshold gating if config exists
+if [ -f "$WORKSPACE/.fortressci.yml" ] && [ -f "/usr/local/bin/check-thresholds.sh" ]; then
+    echo ""
+    echo "🔒 Running threshold checks..."
+    bash /usr/local/bin/check-thresholds.sh "$RESULTS_DIR" "$WORKSPACE/.fortressci.yml"
 fi
