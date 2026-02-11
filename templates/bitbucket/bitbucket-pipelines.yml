@@ -1,0 +1,29 @@
+pipelines:
+  default:
+    - parallel:
+        - step:
+            name: Secret Scan (TruffleHog)
+            image: trufflesecurity/trufflehog:latest
+            script:
+              - trufflehog git file://. --since-commit HEAD~1 --fail
+        - step:
+            name: SAST (Semgrep)
+            image: returntocorp/semgrep
+            script:
+              - semgrep --config auto --sarif -o semgrep.sarif .
+            artifacts:
+              - semgrep.sarif
+        - step:
+            name: SCA (Snyk)
+            image: snyk/snyk:node
+            script:
+              - snyk test --json > snyk.json
+            artifacts:
+              - snyk.json
+        - step:
+            name: IaC Scan (Checkov)
+            image: bridgecrew/checkov:latest
+            script:
+              - checkov -d . --output-file-path checkov.sarif --output sarif
+            artifacts:
+              - checkov.sarif

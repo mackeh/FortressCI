@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+    environment {
+        SNYK_TOKEN = credentials('snyk-token')
+    }
+
+    stages {
+        stage('FortressCI Security') {
+            parallel {
+                stage('Secret Scan') {
+                    steps {
+                        sh 'docker run --rm -v $(pwd):/workdir trufflesecurity/trufflehog:latest git file:///workdir --since-commit HEAD~1 --fail'
+                    }
+                }
+                stage('SAST (Semgrep)') {
+                    steps {
+                        sh 'docker run --rm -v $(pwd):/src returntocorp/semgrep semgrep --config auto --sarif -o /src/semgrep.sarif /src'
+                        archiveArtifacts artifacts: 'semgrep.sarif', allowEmptyArchive: true
+                    }
+                }
+                stage('SCA (Snyk)') {
+                    steps {
+                        sh 'snyk test --json > snyk.json'
+                        archiveArtifacts artifacts: 'snyk.json', allowEmptyArchive: true
+                    }
+                }
+                stage('IaC (Checkov)') {
+                    steps {
+                        sh 'docker run --rm -v $(pwd):/tf bridgecrew/checkov:latest -d /tf --output-file-path /tf/checkov.sarif --output sarif'
+                        archiveArtifacts artifacts: 'checkov.sarif', allowEmptyArchive: true
+                    }
+                }
+            }
+        }
+    }
+}

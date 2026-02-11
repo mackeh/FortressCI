@@ -1,0 +1,47 @@
+version: 2.1
+
+jobs:
+  secret-scan:
+    docker:
+      - image: trufflesecurity/trufflehog:latest
+    steps:
+      - checkout
+      - run: trufflehog git file://. --since-commit HEAD~1 --fail
+
+  sast-scan:
+    docker:
+      - image: returntocorp/semgrep
+    steps:
+      - checkout
+      - run: semgrep --config auto --sarif -o semgrep.sarif .
+      - store_artifacts:
+          path: semgrep.sarif
+
+  sca-scan:
+    docker:
+      - image: snyk/snyk:node
+    environment:
+      SNYK_TOKEN: $SNYK_TOKEN
+    steps:
+      - checkout
+      - run: snyk test --json > snyk.json
+      - store_artifacts:
+          path: snyk.json
+
+  iac-scan:
+    docker:
+      - image: bridgecrew/checkov:latest
+    steps:
+      - checkout
+      - run: checkov -d . --output-file-path checkov.sarif --output sarif
+      - store_artifacts:
+          path: checkov.sarif
+
+workflows:
+  version: 2
+  devsecops:
+    jobs:
+      - secret-scan
+      - sast-scan
+      - sca-scan
+      - iac-scan

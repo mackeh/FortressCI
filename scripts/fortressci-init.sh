@@ -3,6 +3,16 @@
 # FortressCI Init Script
 # Sets up FortressCI in a new project by generating tailored configurations.
 
+# Parse arguments
+CI_ARG=""
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --ci) CI_ARG="$2"; shift ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
+
 echo "🏰 FortressCI Setup Wizard"
 echo ""
 
@@ -14,9 +24,18 @@ if [ -f "go.mod" ]; then echo "✓ Detected: Go"; LANG="go"; fi
 if [ -f "pom.xml" ] || [ -f "build.gradle" ]; then echo "✓ Detected: Java"; LANG="java"; fi
 
 # Detect CI platform
+# Detect CI platform
 CI="unknown"
-if [ -d ".github/workflows" ]; then CI="github-actions"; fi
-if [ -f ".gitlab-ci.yml" ]; then CI="gitlab-ci"; fi
+if [ -n "$CI_ARG" ]; then
+    CI="$CI_ARG"
+else
+    if [ -d ".github/workflows" ]; then CI="github-actions"; fi
+    if [ -f ".gitlab-ci.yml" ]; then CI="gitlab-ci"; fi
+    if [ -f "bitbucket-pipelines.yml" ]; then CI="bitbucket"; fi
+    if [ -f "azure-pipelines.yml" ]; then CI="azure"; fi
+    if [ -f "Jenkinsfile" ]; then CI="jenkins"; fi
+    if [ -d ".circleci" ]; then CI="circleci"; fi
+fi
 
 # Determine script directory to locate templates
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -31,26 +50,60 @@ echo ""
 # Prompt for CI platform if not detected
 if [ "$CI" == "unknown" ]; then
     echo "Could not detect CI platform."
-    read -p "Select CI platform (github-actions/gitlab-ci): " CI_INPUT
-    if [[ "$CI_INPUT" == "github-actions" || "$CI_INPUT" == "gitlab-ci" ]]; then
-        CI="$CI_INPUT"
-    else
-        echo "Invalid selection. Defaulting to github-actions."
-        CI="github-actions"
-    fi
+    echo "Available options:"
+    echo "  1) github-actions"
+    echo "  2) gitlab-ci"
+    echo "  3) bitbucket"
+    echo "  4) azure"
+    echo "  5) jenkins"
+    echo "  6) circleci"
+    read -p "Select CI platform (enter name or number): " CI_INPUT
+    
+    case $CI_INPUT in
+        1|github-actions) CI="github-actions" ;;
+        2|gitlab-ci) CI="gitlab-ci" ;;
+        3|bitbucket) CI="bitbucket" ;;
+        4|azure) CI="azure" ;;
+        5|jenkins) CI="jenkins" ;;
+        6|circleci) CI="circleci" ;;
+        *) 
+            echo "Invalid selection. Defaulting to github-actions."
+            CI="github-actions" 
+            ;;
+    esac
 fi
 
 # Generate files
 echo "Generating configuration files..."
 
-if [ "$CI" == "github-actions" ]; then
-    mkdir -p .github/workflows
-    cp "$TEMPLATES_DIR/github-actions/devsecops.yml" .github/workflows/devsecops.yml
-    echo "✅ Generated .github/workflows/devsecops.yml"
-elif [ "$CI" == "gitlab-ci" ]; then
-    cp "$TEMPLATES_DIR/gitlab-ci/devsecops.yml" .gitlab-ci.yml
-    echo "✅ Generated .gitlab-ci.yml"
-fi
+case $CI in
+    github-actions)
+        mkdir -p .github/workflows
+        cp "$TEMPLATES_DIR/github-actions/devsecops.yml" .github/workflows/devsecops.yml
+        echo "✅ Generated .github/workflows/devsecops.yml"
+        ;;
+    gitlab-ci)
+        cp "$TEMPLATES_DIR/gitlab-ci/devsecops.yml" .gitlab-ci.yml
+        echo "✅ Generated .gitlab-ci.yml"
+        ;;
+    bitbucket)
+        cp "$TEMPLATES_DIR/bitbucket/bitbucket-pipelines.yml" bitbucket-pipelines.yml
+        echo "✅ Generated bitbucket-pipelines.yml"
+        ;;
+    azure)
+        cp "$TEMPLATES_DIR/azure/azure-pipelines.yml" azure-pipelines.yml
+        echo "✅ Generated azure-pipelines.yml"
+        ;;
+    jenkins)
+        cp "$TEMPLATES_DIR/jenkins/Jenkinsfile" Jenkinsfile
+        echo "✅ Generated Jenkinsfile"
+        ;;
+    circleci)
+        mkdir -p .circleci
+        cp "$TEMPLATES_DIR/circleci/config.yml" .circleci/config.yml
+        echo "✅ Generated .circleci/config.yml"
+        ;;
+esac
 
 cp "$TEMPLATES_DIR/pre-commit-config.yaml" .pre-commit-config.yaml
 echo "✅ Generated .pre-commit-config.yaml"
