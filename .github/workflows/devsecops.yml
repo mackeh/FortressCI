@@ -319,6 +319,12 @@ jobs:
       - name: Generate Compliance Report
         run: python3 scripts/generate-compliance-report.py results/ .security/compliance-mappings.yml
 
+      - name: AI Triage
+        if: always()
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python3 scripts/ai-triage.py --results-dir results/ --config .fortressci.yml
+
       - name: Generate Hashes
         id: hash
         run: |
