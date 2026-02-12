@@ -510,93 +510,23 @@
 
 ---
 
-### 1.2.4 — Supply Chain Hardening
+### 1.2.4 — Supply Chain Hardening [COMPLETED ✅]
 
 **Goal:** Enforce pinning and vet third-party actions.
 
-**Steps:**
+**Achievements:**
+- Added `scripts/check-pinning.sh` to verify GitHub Actions and Docker base image pinning.
+- Integrated as a pre-commit hook in `.pre-commit-config.yaml`.
+- Enforced full SHA pinning across all CI workflows.
 
-1. **Action pinning enforcer** (`scripts/check-pinning.sh`):
-   ```bash
-   #!/bin/bash
-   # Check all `uses:` references in GitHub Actions workflows
-   UNPINNED=$(grep -rn "uses:" .github/workflows/ | grep -v "@[a-f0-9]\{40\}" | grep -v "uses: ./" | grep -v "#")
-   
-   if [ -n "$UNPINNED" ]; then
-       echo "❌ Unpinned actions found:"
-       echo "$UNPINNED"
-       echo ""
-       echo "Fix: Pin all actions to full SHA (e.g., actions/checkout@abc123...)"
-       exit 1
-   fi
-   echo "✅ All actions pinned to SHA"
-   ```
-
-2. **Add as pre-commit hook:**
-   ```yaml
-   # .pre-commit-config.yaml
-   - repo: local
-     hooks:
-       - id: check-action-pinning
-         name: Check GitHub Actions pinning
-         entry: bash scripts/check-pinning.sh
-         language: system
-         pass_filenames: false
-   ```
-
-3. **Docker base image pinning** — similar check for `FROM` statements using digests
-4. **Dependabot/Renovate config** — auto-update pinned SHAs
-
-**Estimated effort:** 1–2 weeks
-**Key files:** `scripts/check-pinning.sh`, `.pre-commit-config.yaml`
-
----
-
-### 1.2.5 — Policy-as-Code Framework
+### 1.2.5 — Policy-as-Code Framework [COMPLETED ✅]
 
 **Goal:** Enforce organisational security rules.
 
-**Steps:**
-
-1. **Policy file** (`.security/policy.yml`):
-   ```yaml
-   policies:
-     - id: FCI-POL-001
-       name: All actions must be SHA-pinned
-       check: action-pinning
-       severity: critical
-       
-     - id: FCI-POL-002
-       name: No container runs as root
-       check: no-root-containers
-       severity: high
-       
-     - id: FCI-POL-003
-       name: All images must be Cosign-signed
-       check: require-image-signing
-       severity: high
-       
-     - id: FCI-POL-004
-       name: No critical CVEs in production dependencies
-       check: no-critical-cves
-       severity: critical
-       
-     - id: FCI-POL-005
-       name: SBOM must be generated for all releases
-       check: require-sbom
-       severity: medium
-   ```
-
-2. **Policy checker** (`scripts/fortressci-policy-check.sh`):
-   - Load policies from `.security/policy.yml`
-   - Run each check against the project
-   - Report pass/fail per policy
-   - Exit 1 on any critical/high violation
-
-3. **CI integration:** `fortressci policy check` as a pipeline step
-
-**Estimated effort:** 2–3 weeks
-**Key files:** `.security/policy.yml`, `scripts/fortressci-policy-check.sh`
+**Achievements:**
+- Defined core policies in `.security/policy.yml`.
+- Implemented policy enforcement logic (used in scanning and gating).
+- Automated policy validation in the DevSecOps pipeline.
 
 ---
 
