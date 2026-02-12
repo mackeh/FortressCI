@@ -3,6 +3,7 @@
 FortressCI is a secure-by-default DevSecOps platform blueprint designed to implement "Shift Left" security, automated pipelines, and infrastructure protection. It integrates best-in-class open-source security tools to ensure your code and infrastructure are secure from day one.
 
 > **[View our Roadmap](ROADMAP.md)** for upcoming features and long-term vision.
+> **[Try the Interactive Playground](playground/index.html)** to see FortressCI in action.
 
 ## Features
 
@@ -24,13 +25,16 @@ Automated checks on every push and pull request across **6 CI platforms**.
 - **IaC Scanning**: Checkov scans Terraform, CloudFormation, and Kubernetes manifests.
 - **Container Security**: [Trivy](https://github.com/aquasecurity/trivy) scans Docker images for OS and library vulnerabilities.
 - **DAST**: [OWASP ZAP](https://www.zaproxy.org/) baseline scan for runtime attack surface.
-- **Signing**: [Cosign](https://github.com/sigstore/cosign) signs container images with SBOM generation.
+- **Signing**: [Cosign](https://github.com/sigstore/cosign) signs container images.
+- **SBOM**: [Syft](https://github.com/anchore/syft) generates SPDX/CycloneDX Bill of Materials.
+- **Provenance**: [SLSA](https://slsa.dev/) Level 3 build provenance via slsa-github-generator.
 
-### Phase 3: Infrastructure Security
+### Phase 3: Platform & Intelligence
 
-- Container registry signing and attestation
-- SBOM generation via Trivy
-- Compliance audit artifacts
+- **AI Triage**: Automated findings analysis and prioritisation via LLMs.
+- **Auto-Remediation**: Self-healing pipelines that open PRs to fix vulnerabilities.
+- **Security Dashboard**: Real-time visualisations of security posture and trends.
+- **MCP Server**: Native integration for AI assistants to query security data.
 
 ---
 
@@ -44,22 +48,13 @@ cd FortressCI
 
 # Run the interactive wizard — detects your project type and CI platform
 ./scripts/fortressci-init.sh
-
-# Or skip prompts by specifying the CI platform
-./scripts/fortressci-init.sh --ci github-actions
 ```
 
 The wizard generates:
 - CI/CD workflow file for your platform
 - `.pre-commit-config.yaml` (local hooks)
-- `.security/waivers.yml` (finding exceptions)
+- `.security/` configurations (policy, waivers, compliance mappings, falco rules)
 - `.fortressci.yml` (severity thresholds and scanner config)
-
-Then install the hooks:
-
-```bash
-pre-commit install
-```
 
 ### Option 2: Docker Local Scan
 
@@ -76,152 +71,64 @@ docker run --rm \
   fortressci/scan /workspace
 ```
 
-This runs TruffleHog, Semgrep, Snyk, Checkov, and Trivy in sequence, then generates an interactive HTML report and checks severity thresholds.
+This runs the full suite including AI triage, SBOM generation, and threshold gating.
 
 ---
 
-## Supported CI Platforms
+## Security Scoring
 
-| Platform | Template | Generated File |
-|----------|----------|----------------|
-| **GitHub Actions** | `templates/github-actions/devsecops.yml` | `.github/workflows/devsecops.yml` |
-| **GitLab CI** | `templates/gitlab-ci/devsecops.yml` | `.gitlab-ci.yml` |
-| **Bitbucket Pipelines** | `templates/bitbucket/bitbucket-pipelines.yml` | `bitbucket-pipelines.yml` |
-| **Azure Pipelines** | `templates/azure/azure-pipelines.yml` | `azure-pipelines.yml` |
-| **Jenkins** | `templates/jenkins/Jenkinsfile` | `Jenkinsfile` |
-| **CircleCI** | `templates/circleci/config.yml` | `.circleci/config.yml` |
-
-All templates implement the same 5 scan stages with platform-specific syntax.
-
----
-
-## Supply Chain Hardening
-
-Check that GitHub Actions are pinned to full SHAs and Docker base images are version-pinned:
+FortressCI calculates a real-time security grade (A+ to F) based on findings and practices.
 
 ```bash
-# Check both actions and Dockerfiles (warnings only)
-./scripts/check-pinning.sh
-
-# Check only GitHub Actions
-./scripts/check-pinning.sh --actions
-
-# Check only Dockerfiles
-./scripts/check-pinning.sh --docker
-
-# Strict mode — exit 1 on any unpinned reference
-./scripts/check-pinning.sh --strict
+# Generate your security badge
+./scripts/generate-badge.py <results_dir>
 ```
+
+![FortressCI Badge](https://img.shields.io/badge/FortressCI-A%2B%20(95)-brightgreen)
 
 ---
 
 ## Policy-as-Code
 
-Define organisational security policies in `.security/policy.yml`:
-
-```yaml
-policies:
-  - id: FCI-POL-001
-    name: All GitHub Actions must be SHA-pinned
-    check: action-pinning
-    severity: critical
-    enabled: true
-```
-
-Policies are enforced during scans and can be toggled per-project. See `.security/policy.yml` for all default policies.
-
----
-
-## Severity Thresholds
-
-Configure when your pipeline should fail or warn in `.fortressci.yml`:
-
-```yaml
-thresholds:
-  fail_on: critical   # critical | high | medium | low | none
-  warn_on: high
-```
-
-Run the gating check manually:
+Define organisational security policies in `.security/policy.yml`. Policies are enforced during scans and can gate your pipeline.
 
 ```bash
-./scripts/check-thresholds.sh <results_dir> [.fortressci.yml]
+# Run policy enforcement
+./scripts/fortressci-policy-check.sh .security/policy.yml results/
 ```
 
 ---
 
-## Waiver Management
+## Compliance Reporting
 
-Manage security finding exceptions with the waiver CLI:
+Map technical findings to regulatory frameworks (SOC2, NIST, OWASP).
 
 ```bash
-# Add a waiver
-./scripts/fortressci-waiver.sh add \
-  --id "CVE-2024-1234" \
-  --scanner snyk \
-  --severity high \
-  --reason "Dev-dependency only, not used in production" \
-  --expires 2026-06-01 \
-  --author "@your-name"
-
-# List active waivers
-./scripts/fortressci-waiver.sh list
-
-# List including expired
-./scripts/fortressci-waiver.sh list --expired
-
-# Remove expired waivers
-./scripts/fortressci-waiver.sh expire
-
-# Remove a specific waiver
-./scripts/fortressci-waiver.sh remove --id "CVE-2024-1234"
+# Generate compliance report
+python3 scripts/generate-compliance-report.py results/ .security/compliance-mappings.yml
 ```
-
-Waivers are stored in `.security/waivers.yml` with required fields: `id`, `scanner`, `severity`, `justification`, `expires_on`, `approved_by`.
 
 ---
 
-## HTML Reporting
+## Auto-Remediation
 
-After scans complete, an interactive HTML report is generated with:
-
-- Severity breakdown cards (critical, high, medium, low)
-- Findings by tool (doughnut chart)
-- Severity distribution (bar chart)
-- Filterable, searchable findings table
-
-Generate manually:
+FortressCI can automatically apply fixes for dependency and IaC vulnerabilities.
 
 ```bash
-python3 scripts/generate-report.py <results_dir>
+# Attempt automatic fixes
+./scripts/auto-fix.sh
 ```
 
 ---
 
-## CI/CD Secrets
+## AI-Powered Triage
 
-Add these to your CI platform's secret store:
+Use LLMs to explain complex vulnerabilities and prioritise remediation.
 
-| Secret | Required | Purpose |
-|--------|----------|---------|
-| `SNYK_TOKEN` | For SCA scans | [Get token](https://app.snyk.io/account) |
-| `COSIGN_KEY` | For image signing | Generate with `./scripts/generate_keys.sh` |
-| `COSIGN_PASSWORD` | For image signing | Passphrase for Cosign key |
-| `INFRACOST_API_KEY` | For cost estimation | [Get token](https://www.infracost.io/) |
-
----
-
-## Tools & Configuration
-
-| Tool | Type | Configuration |
-|------|------|---------------|
-| **TruffleHog** | Secrets | `.pre-commit-config.yaml` / CI workflow |
-| **Semgrep** | SAST | CI workflow (auto-config, OWASP Top 10) |
-| **Snyk** | SCA | CI workflow (Node/Python/Go/Java) |
-| **Checkov** | IaC | `.pre-commit-config.yaml` / CI workflow |
-| **Trivy** | Containers | CI workflow |
-| **OWASP ZAP** | DAST | CI workflow (baseline scan) |
-| **Cosign** | Signing | CI workflow (image signing + SBOM) |
+```bash
+# Run AI triage (requires ANTHROPIC_API_KEY)
+python3 scripts/ai-triage.py --results-dir results/ --config .fortressci.yml
+```
 
 ---
 
@@ -233,56 +140,43 @@ Add these to your CI platform's secret store:
 │   ├── workflows/devsecops.yml    # Primary GitHub Actions pipeline
 │   └── scripts/post_summary.js    # PR comment posting script
 ├── .security/
+│   ├── policy.yml                 # Policy-as-code definitions
 │   ├── waivers.yml                # Security finding exceptions
-│   └── policy.yml                 # Policy-as-code definitions
+│   ├── compliance-mappings.yml    # Framework mapping definitions
+│   └── falco-rules.yaml           # Runtime security rules
+├── dashboard/                     # Security Operations Dashboard
+├── playground/                    # Interactive Browser Playground
+├── examples/                      # Vulnerable sample apps (Node/Python/TF)
+├── integrations/
+│   └── mcp-server/                # Model Context Protocol server
 ├── scripts/
 │   ├── fortressci-init.sh         # Setup wizard CLI
 │   ├── run-all.sh                 # Docker scan orchestrator
+│   ├── ai-triage.py               # AI findings analysis
+│   ├── auto-fix.sh                # Automated remediation
+│   ├── generate-badge.py          # Security scoring & badges
+│   ├── generate-sbom.sh           # SBOM generator
+│   ├── fortressci-policy-check.sh # Policy enforcement
 │   ├── generate-report.py         # HTML report generator
-│   ├── summarize.py               # Summary JSON generator
-│   ├── check-thresholds.sh        # Severity threshold gating
-│   ├── fortressci-waiver.sh       # Waiver management CLI
-│   ├── check-pinning.sh           # Supply chain pinning checker
-│   └── generate_keys.sh           # Cosign key generation
-├── templates/                     # CI/CD configs for all 6 platforms
-│   ├── github-actions/
-│   ├── gitlab-ci/
-│   ├── bitbucket/
-│   ├── azure/
-│   ├── jenkins/
-│   ├── circleci/
-│   ├── report.html.j2             # Jinja2 HTML report template
-│   ├── fortressci.yml             # Default threshold config
-│   ├── pre-commit-config.yaml
-│   └── waivers.yml
-├── terraform/main.tf              # Sample (intentionally vulnerable) IaC
-├── .fortressci.yml                # Threshold & scanner configuration
-├── .pre-commit-config.yaml        # Local Git hooks
-├── Dockerfile                     # All-in-one scanner image
-└── Dockerfile.example             # Sample vulnerable Dockerfile
+│   └── check-pinning.sh           # Supply chain pinning checker
+├── templates/                     # CI/CD and config templates
+├── .fortressci.yml                # Global project configuration
+└── Dockerfile                     # All-in-one scanner image
 ```
 
-## Operational Recommendations
+---
 
-### Branch Protection
+## CI/CD Secrets
 
-Enable [Branch Protection Rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/managing-a-branch-protection-rule) on `main`:
-
-- Require status checks to pass before merging (select all scan jobs).
-- Require pull request reviews before merging.
-- Do not allow bypassing the above settings.
-
-### Scheduled Scans
-
-The GitHub Actions pipeline runs a baseline secret scan weekly (Sundays at 00:00 UTC) to catch newly-identified vulnerability patterns.
-
-### Incident Triage
-
-- **Findings**: All SARIF results appear in GitHub's **Security > Code Scanning** tab (if Advanced Security is enabled) or as downloadable artifacts.
-- **Waivers**: For false positives, use the waiver CLI to document the exception with a justification and expiry date.
+| Secret | Required | Purpose |
+|--------|----------|---------|
+| `SNYK_TOKEN` | For SCA scans | [Get token](https://app.snyk.io/account) |
+| `ANTHROPIC_API_KEY` | For AI Triage | [Get key](https://console.anthropic.com/) |
+| `COSIGN_KEY` | For image signing | Generate with `./scripts/generate_keys.sh` |
+| `INFRACOST_API_KEY` | For cost estimation | [Get token](https://www.infracost.io/) |
 
 ---
 
 ## Contributing
 
-This is a blueprint repository. Fork it and adapt to your needs. Changes to scan logic should be reflected across all 6 CI platform templates.
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) and our [Code of Conduct](CODE_OF_CONDUCT.md).
