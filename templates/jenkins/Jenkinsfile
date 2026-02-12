@@ -31,6 +31,14 @@ pipeline {
                         archiveArtifacts artifacts: 'checkov.sarif', allowEmptyArchive: true
                     }
                 }
+                stage('SBOM (Syft)') {
+                    steps {
+                        sh 'docker run --rm -v $(pwd):/work anchore/syft:latest /work -o spdx-json=/work/sbom-source.spdx.json'
+                        sh 'docker run --rm -v $(pwd):/work anchore/syft:latest /work -o cyclonedx-json=/work/sbom-source.cdx.json'
+                        archiveArtifacts artifacts: 'sbom-source.spdx.json', allowEmptyArchive: true
+                        archiveArtifacts artifacts: 'sbom-source.cdx.json', allowEmptyArchive: true
+                    }
+                }
             }
         }
     }

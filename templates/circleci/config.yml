@@ -37,6 +37,21 @@ jobs:
       - store_artifacts:
           path: checkov.sarif
 
+  sbom-scan:
+    docker:
+      - image: anchore/syft:latest
+    steps:
+      - checkout
+      - run:
+          name: Generate SBOM
+          command: |
+            syft . -o spdx-json=sbom-source.spdx.json
+            syft . -o cyclonedx-json=sbom-source.cdx.json
+      - store_artifacts:
+          path: sbom-source.spdx.json
+      - store_artifacts:
+          path: sbom-source.cdx.json
+
 workflows:
   version: 2
   devsecops:
@@ -45,3 +60,4 @@ workflows:
       - sast-scan
       - sca-scan
       - iac-scan
+      - sbom-scan

@@ -50,3 +50,19 @@ stages:
       inputs:
         PathtoPublish: 'checkov.sarif'
         ArtifactName: 'checkov-report'
+
+  - job: SBOM
+    displayName: "SBOM Generation (Syft)"
+    steps:
+    - script: |
+        docker run --rm -v $(pwd):/work anchore/syft:latest /work -o spdx-json=/work/sbom-source.spdx.json
+        docker run --rm -v $(pwd):/work anchore/syft:latest /work -o cyclonedx-json=/work/sbom-source.cdx.json
+      displayName: "Run Syft"
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: 'sbom-source.spdx.json'
+        ArtifactName: 'sbom-spdx'
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: 'sbom-source.cdx.json'
+        ArtifactName: 'sbom-cdx'
