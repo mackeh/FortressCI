@@ -1,0 +1,40 @@
+# FortressCI Policy-as-Code
+# Organisational security policies enforced on every scan.
+# Each policy maps to a check function in fortressci-policy-check.sh.
+
+policies:
+  - id: FCI-POL-001
+    name: All GitHub Actions must be SHA-pinned
+    check: action-pinning
+    severity: critical
+    enabled: true
+
+  - id: FCI-POL-002
+    name: No container runs as root
+    check: no-root-containers
+    severity: high
+    enabled: true
+
+  - id: FCI-POL-003
+    name: No critical CVEs in scan results
+    check: no-critical-cves
+    severity: critical
+    enabled: true
+
+  - id: FCI-POL-004
+    name: Docker base images must be version-pinned
+    check: docker-base-pinning
+    severity: high
+    enabled: true
+
+  - id: FCI-POL-005
+    name: No secrets detected in codebase
+    check: no-secrets
+    severity: critical
+    enabled: true
+
+  - id: FCI-POL-006
+    name: Security waivers must not be expired
+    check: waivers-current
+    severity: medium
+    enabled: true

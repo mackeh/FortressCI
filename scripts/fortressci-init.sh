@@ -112,6 +112,15 @@ mkdir -p .security
 cp "$TEMPLATES_DIR/waivers.yml" .security/waivers.yml
 echo "✅ Generated .security/waivers.yml"
 
+cp "$TEMPLATES_DIR/security/policy.yml" .security/policy.yml
+echo "✅ Generated .security/policy.yml"
+
+cp "$TEMPLATES_DIR/security/compliance-mappings.yml" .security/compliance-mappings.yml
+echo "✅ Generated .security/compliance-mappings.yml"
+
+cp "$TEMPLATES_DIR/security/falco-rules.yaml" .security/falco-rules.yaml
+echo "✅ Generated .security/falco-rules.yaml"
+
 if [ ! -f ".fortressci.yml" ]; then
     cp "$TEMPLATES_DIR/fortressci.yml" .fortressci.yml
     echo "✅ Generated .fortressci.yml (thresholds & scanner config)"
