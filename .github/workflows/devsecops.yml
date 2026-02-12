@@ -329,6 +329,10 @@ jobs:
         if: always()
         run: python3 scripts/generate-badge.py results/
 
+      - name: Build Attack Graph
+        if: always()
+        run: python3 scripts/build-attack-graph.py results/
+
       - name: Generate Hashes
         id: hash
         run: |
