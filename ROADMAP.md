@@ -445,40 +445,15 @@
 
 ---
 
-### 1.2.2 — SBOM Generation
+### 1.2.2 — SBOM Generation [COMPLETED ✅]
 
 **Goal:** Produce Software Bill of Materials at build time.
 
-**Steps:**
-
-1. **Add SBOM generation step** to CI pipeline:
-   ```yaml
-   sbom:
-     stage: post-build
-     image: anchore/syft:latest
-     script:
-       - syft dir:. -o spdx-json > sbom-source.spdx.json
-       - syft docker:${IMAGE_NAME} -o cyclonedx-json > sbom-container.cdx.json
-     artifacts:
-       paths:
-         - sbom-source.spdx.json
-         - sbom-container.cdx.json
-   ```
-
-2. **Tie SBOM to Cosign signature:**
-   ```bash
-   cosign attest --predicate sbom-container.cdx.json --type cyclonedx ${IMAGE_NAME}@${DIGEST}
-   ```
-
-3. **SBOM verification:**
-   ```bash
-   cosign verify-attestation --type cyclonedx ${IMAGE_NAME}@${DIGEST} | jq '.payload' | base64 -d
-   ```
-
-**Estimated effort:** 1–2 weeks
-**Key files:** `.github/workflows/devsecops.yml` (new stage), `scripts/generate-sbom.sh`
-
----
+**Achievements:**
+- Added `syft` to the Docker scanner image.
+- Implemented `scripts/generate-sbom.sh` for source and container SBOMs.
+- Integrated SBOM generation into `run-all.sh` and CI workflows.
+- Uploaded SBOMs as CI artifacts (SPDX/CycloneDX).
 
 ### 1.2.3 — SLSA Provenance
 

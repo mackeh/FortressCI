@@ -279,6 +279,22 @@ jobs:
     needs: [secret-scan, sast-scan, sca-scan, iac-scan, container-build-sign, dast-scan]
     if: always()
     steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Generate Source SBOM
+        run: |
+          mkdir -p results
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          /usr/local/bin/syft dir:. -o spdx-json > results/sbom-source.spdx.json
+          /usr/local/bin/syft dir:. -o cyclonedx-json > results/sbom-source.cdx.json
+
+      - name: Upload SBOM Artifacts
+        uses: actions/upload-artifact@6027bc5291242e2308107931669864239f884a44 # v4.4.0
+        with:
+          name: sbom-reports
+          path: results/sbom-*
+
       - name: Generate Audit Record
         run: |
           echo "{" > deployment-audit.json
@@ -294,6 +310,9 @@ jobs:
         with:
           name: deployment-audit
           path: deployment-audit.json
+
+      - name: Run Policy Check
+        run: ./scripts/fortressci-policy-check.sh .security/policy.yml results/
 
   pr-feedback:
     name: Developer Feedback (PR Comments)
