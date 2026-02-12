@@ -28,13 +28,13 @@ jobs:
 
       - name: TruffleHog (Diff Mode)
         if: github.event_name == 'push' || github.event_name == 'pull_request'
-        uses: trufflesecurity/trufflehog@895cc72a44b8b6a386993a4046bc77884784a929 # v3.82.12
+        uses: trufflesecurity/trufflehog@6961f2bace57ab32b23b3ba40f8f420f6bc7e004 # v3.82.12
         with:
           extra_args: --only-verified --fail --no-update
 
       - name: TruffleHog (Baseline Mode)
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        uses: trufflesecurity/trufflehog@895cc72a44b8b6a386993a4046bc77884784a929 # v3.82.12
+        uses: trufflesecurity/trufflehog@6961f2bace57ab32b23b3ba40f8f420f6bc7e004 # v3.82.12
         with:
           extra_args: --only-verified --fail --no-update --since-commit HEAD
 
@@ -42,7 +42,7 @@ jobs:
     name: SAST (Semgrep)
     runs-on: ubuntu-latest
     container:
-      image: returntocorp/semgrep
+      image: semgrep/semgrep # Updated from returntocorp/semgrep
     if: (github.actor != 'dependabot[bot]')
     steps:
       - name: Checkout code
@@ -87,6 +87,7 @@ jobs:
         run: npm install || true
 
       - name: Snyk Scan
+        if: ${{ env.SNYK_TOKEN != '' }}
         uses: snyk/actions/node@b9830575092c6dac41351111608672074e54e445 # v0.10.0
         continue-on-error: true
         with:
@@ -94,21 +95,21 @@ jobs:
 
       - name: Upload SARIF
         uses: actions/upload-artifact@6027bc5291242e2308107931669864239f884a44 # v4.4.0
-        if: always()
+        if: always() && env.SNYK_TOKEN != ''
         with:
           name: snyk.sarif
           path: snyk.sarif
       
       - name: Upload Security SARIF (CodeQL)
         uses: github/codeql-action/upload-sarif@66115715ae9c0202956f4d546f14066914995955 # v3.25.11
-        if: always()
+        if: always() && env.SNYK_TOKEN != ''
         continue-on-error: true
         with:
           sarif_file: snyk.sarif
 
       - name: Snyk Gatekeeper
-        uses: snyk/actions/node@b9830575092c6dac41351111608672074e54e445 # v0.10.0
         if: ${{ env.SNYK_TOKEN != '' }}
+        uses: snyk/actions/node@b9830575092c6dac41351111608672074e54e445 # v0.10.0
         with:
           args: --severity-threshold=high
 
@@ -155,6 +156,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Infracost
+        if: ${{ env.INFRACOST_API_KEY != '' }}
         uses: infracost/actions/setup@91f7a6021289569735d487f98f6d525790a6e60b # v3.0.0
         with:
           api-key: ${{ env.INFRACOST_API_KEY }}
@@ -226,11 +228,7 @@ jobs:
           if [[ -z "$COSIGN_PRIVATE_KEY" ]]; then
             echo "Skipping signing: COSIGN_PRIVATE_KEY not set."
           else
-            # In a real pipeline, you'd push to a registry first. 
-            # For this demo, we mock the signing step or sign a local tag if supported (Cosign usually needs a registry).
-            echo "Cosign key detected. In a real pipeline, we would run:"
-            echo "cosign sign --key env://COSIGN_PRIVATE_KEY my-registry/my-app:${{ github.sha }}"
-            # To demonstrate, we'll create a dummy signature file
+            echo "Cosign key detected. Mock signing for demo."
             echo "signature" > cosign.sig
           fi
 
@@ -258,19 +256,15 @@ jobs:
       - name: Build & Run Container
         run: |
           docker build -t my-app:${{ github.sha }} .
-          # Run detached, map internal 3000 to host 3000
           docker run -d -p 3000:3000 --name test-app my-app:${{ github.sha }}
-          # Wait for app to start (simple sleep or healthcheck loop)
           sleep 5 
 
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@290a611c039d91f868c6e26487e0766324263720 # v0.14.0
-        continue-on-error: true # DAST is noisy; often we want results without blocking initially
+        continue-on-error: true
         with:
           target: 'http://localhost:3000'
-          fail_action: false # Don't fail the action immediately, check report later
-          
-      # Note: ZAP action outputs artifacts automatically (zap_report.html)
+          fail_action: false 
 
   compliance-audit:
     name: Generate Compliance Artifacts
@@ -284,6 +278,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Download All Artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          path: results
+          merge-multiple: true
 
       - name: Generate Source SBOM
         run: |
@@ -300,19 +300,19 @@ jobs:
 
       - name: Generate Audit Record
         run: |
-          echo "{" > deployment-audit.json
-          echo "  \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"," >> deployment-audit.json
-          echo "  \"repository\": \"$GITHUB_REPOSITORY\"," >> deployment-audit.json
-          echo "  \"commit_sha\": \"$GITHUB_SHA\"," >> deployment-audit.json
-          echo "  \"actor\": \"$GITHUB_ACTOR\"," >> deployment-audit.json
-          echo "  \"workflow_run_id\": \"$GITHUB_RUN_ID\"," >> deployment-audit.json
-          echo "}" >> deployment-audit.json
+          echo "{" > results/deployment-audit.json
+          echo "  \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"," >> results/deployment-audit.json
+          echo "  \"repository\": \"$GITHUB_REPOSITORY\"," >> results/deployment-audit.json
+          echo "  \"commit_sha\": \"$GITHUB_SHA\"," >> results/deployment-audit.json
+          echo "  \"actor\": \"$GITHUB_ACTOR\"," >> results/deployment-audit.json
+          echo "  \"workflow_run_id\": \"$GITHUB_RUN_ID\"," >> results/deployment-audit.json
+          echo "}" >> results/deployment-audit.json
 
       - name: Upload Audit Artifact
         uses: actions/upload-artifact@6027bc5291242e2308107931669864239f884a44 # v4.4.0
         with:
           name: deployment-audit
-          path: deployment-audit.json
+          path: results/deployment-audit.json
 
       - name: Run Policy Check
         run: ./scripts/fortressci-policy-check.sh .security/policy.yml results/
@@ -336,7 +336,7 @@ jobs:
         id: hash
         run: |
           cd results
-          echo "hashes=$(sha256sum sbom-source.spdx.json sbom-source.cdx.json ../deployment-audit.json | base64 -w0)" >> "$GITHUB_OUTPUT"
+          echo "hashes=$(sha256sum sbom-source.spdx.json sbom-source.cdx.json deployment-audit.json | base64 -w0)" >> "$GITHUB_OUTPUT"
 
   provenance:
     needs: [compliance-audit]
@@ -352,7 +352,7 @@ jobs:
   pr-feedback:
     name: Developer Feedback (PR Comments)
     runs-on: ubuntu-latest
-    needs: [sast-scan, sca-scan, iac-scan, container-build-sign] # Wait for scans to finish
+    needs: [sast-scan, sca-scan, iac-scan, container-build-sign]
     if: always() && github.event_name == 'pull_request'
     steps:
       - name: Checkout code
