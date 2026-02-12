@@ -44,3 +44,9 @@ scanners:
   dast:
     enabled: false
     tool: zap
+
+ai:
+  enabled: false
+  provider: anthropic
+  model: claude-3-5-sonnet-20240620
+  explain_severity: [critical, high]

@@ -89,3 +89,12 @@ elif [ -f "scripts/generate-compliance-report.py" ]; then
     echo "📋 Generating compliance report (local)..."
     python3 scripts/generate-compliance-report.py "$RESULTS_DIR" "$WORKSPACE/.security/compliance-mappings.yml"
 fi
+
+# AI Triage
+if [ -f "/usr/local/bin/ai-triage" ]; then
+    echo ""
+    /usr/local/bin/ai-triage --results-dir "$RESULTS_DIR" --config "$WORKSPACE/.fortressci.yml"
+elif [ -f "scripts/ai-triage.py" ]; then
+    echo ""
+    python3 scripts/ai-triage.py --results-dir "$RESULTS_DIR" --config "$WORKSPACE/.fortressci.yml"
+fi

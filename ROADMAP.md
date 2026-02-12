@@ -574,49 +574,14 @@
 
 ---
 
-### 2.0.4 — AI-Powered Triage
+### 2.0.4 — AI-Powered Triage [COMPLETED ✅]
 
 **Goal:** LLM-based explanation and prioritisation of findings.
 
-**Steps:**
-
-1. **LLM integration:**
-   ```python
-   import anthropic
-   
-   def explain_finding(finding):
-       client = anthropic.Anthropic()
-       response = client.messages.create(
-           model="claude-sonnet-4-20250514",
-           max_tokens=300,
-           messages=[{
-               "role": "user",
-               "content": f"""Explain this security finding in 2-3 sentences for a developer:
-               Tool: {finding['tool']}
-               Severity: {finding['severity']}
-               Finding: {finding['message']}
-               File: {finding['file']}:{finding['line']}
-               
-               Include: what the risk is, how exploitable it is, and the simplest fix."""
-           }]
-       )
-       return response.content[0].text
-   ```
-
-2. **Batch processing** — explain all critical/high findings after scan completes
-3. **Cache explanations** — don't re-explain identical findings
-4. **Configuration:**
-   ```yaml
-   # .fortressci.yml
-   ai:
-     enabled: true
-     provider: anthropic
-     api_key_env: ANTHROPIC_API_KEY
-     explain_severity: [critical, high]
-   ```
-
-**Estimated effort:** 1–2 weeks
-**Key files:** `scripts/ai-triage.py`
+**Achievements:**
+- Implemented `scripts/ai-triage.py` for automated findings analysis.
+- Integrated AI orchestration into local scans and CI/CD workflows.
+- Added configuration options for AI providers and severity filtering.
 
 ---
 
