@@ -90,7 +90,11 @@ Waivers are stored in `.security/waivers.yml`.
 - `scripts/ai-triage.py`: Uses LLMs to explain and prioritise security findings.
 - `scripts/generate-badge.py`: Calculates security scores and generates badge URLs.
 - `scripts/auto-fix.sh`: Automatically applies security remediation fixes.
+- `scripts/build-attack-graph.py`: Generates vulnerability chain relationship graphs.
 - `integrations/mcp-server/server.py`: MCP server for AI assistant integration.
+- `dashboard/index.html`: Web-based security operations dashboard.
+- `playground/index.html`: Interactive browser-based security scan simulator.
+- `examples/`: Sample vulnerable applications (Node.js, Python, Terraform).
 - `.security/compliance-mappings.yml`: Mapping definitions for SOC2, NIST, etc.
 - `.security/falco-rules.yaml`: Runtime security rules for container anomaly detection.
 - `Dockerfile`: Defines the environment for the all-in-one security scanner.
