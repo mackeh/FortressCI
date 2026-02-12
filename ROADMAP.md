@@ -17,355 +17,54 @@
 
 ## v1.1.x: Usability & Adoption
 
-### 1.1.1 — `fortressci init` CLI Tool
+### 1.1.1 — `fortressci init` CLI Tool [COMPLETED ✅]
 
 **Goal:** Interactive setup that generates tailored configs.
 
-**Steps:**
+**Achievements:**
+- Implemented `scripts/fortressci-init.sh` setup wizard.
+- Automated detection of project types (Node, Python, Go, Java).
+- Generated tailored CI/CD workflows and security configurations.
 
-1. **Create CLI tool** (Python or Shell — keeping it accessible for DevSecOps audience):
-   ```bash
-   # scripts/fortressci-init.sh
-   #!/bin/bash
-   echo "🏰 FortressCI Setup Wizard"
-   echo ""
-   
-   # Detect project type
-   if [ -f "package.json" ]; then echo "✓ Detected: Node.js"; LANG="node"; fi
-   if [ -f "requirements.txt" ] || [ -f "pyproject.toml" ]; then echo "✓ Detected: Python"; LANG="python"; fi
-   if [ -f "go.mod" ]; then echo "✓ Detected: Go"; LANG="go"; fi
-   if [ -f "pom.xml" ] || [ -f "build.gradle" ]; then echo "✓ Detected: Java"; LANG="java"; fi
-   
-   # Detect CI platform
-   if [ -d ".github/workflows" ]; then CI="github-actions"; fi
-   if [ -f ".gitlab-ci.yml" ]; then CI="gitlab-ci"; fi
-   
-   # Prompt for missing info
-   read -p "? Snyk token configured? (y/n): " HAS_SNYK
-   read -p "? Enable container scanning? (y/n): " HAS_DOCKER
-   read -p "? Enable IaC scanning? (y/n): " HAS_IAC
-   
-   # Generate files
-   cp templates/${CI}/devsecops.yml .github/workflows/devsecops.yml
-   cp templates/pre-commit-config.yaml .pre-commit-config.yaml
-   mkdir -p .security && cp templates/waivers.yml .security/waivers.yml
-   
-   echo "✅ Generated .github/workflows/devsecops.yml"
-   echo "✅ Generated .pre-commit-config.yaml"
-   echo "✅ Generated .security/waivers.yml"
-   echo ""
-   echo "Next: Run 'pre-commit install' and add SNYK_TOKEN to GitHub Secrets"
-   ```
-
-2. **Template variants** for each CI platform:
-   - `templates/github-actions/devsecops.yml`
-   - `templates/gitlab-ci/devsecops.yml`
-   - `templates/bitbucket/devsecops.yml`
-   - `templates/azure/devsecops.yml`
-   - `templates/jenkins/Jenkinsfile`
-
-3. **Language-specific customisation:**
-   - Node.js → Snyk scans `package-lock.json`
-   - Python → Snyk + Bandit + Safety
-   - Go → Snyk + govulncheck
-   - Java → Snyk + SpotBugs
-
-**Estimated effort:** 2 weeks
-**Key files:** `scripts/fortressci-init.sh`, `templates/`
-
----
-
-### 1.1.2 — Multi-CI Platform Templates
+### 1.1.2 — Multi-CI Platform Templates [COMPLETED ✅]
 
 **Goal:** Workflow templates beyond GitHub Actions.
 
-**Steps:**
+**Achievements:**
+- Created production-ready templates for GitHub, GitLab, Bitbucket, Azure, Jenkins, and CircleCI.
+- Standardised scan stages across all platforms.
 
-1. **GitLab CI** (`.gitlab-ci.yml`):
-   ```yaml
-   stages: [secret-scan, sast, sca, iac-scan, container-scan, dast]
-   
-   secret-scan:
-     stage: secret-scan
-     image: trufflesecurity/trufflehog:latest
-     script:
-       - trufflehog git file://. --since-commit HEAD~1 --fail
-   
-   sast:
-     stage: sast
-     image: returntocorp/semgrep
-     script:
-       - semgrep --config auto --sarif -o semgrep.sarif .
-     artifacts:
-       reports:
-         sast: semgrep.sarif
-   
-   # ... sca, iac, container, dast stages
-   ```
-
-2. **Bitbucket Pipelines** (`bitbucket-pipelines.yml`):
-   ```yaml
-   pipelines:
-     default:
-       - parallel:
-           - step:
-               name: Secret Scan
-               script:
-                 - pipe: trufflesecurity/trufflehog-pipe:latest
-           - step:
-               name: SAST
-               script:
-                 - pip install semgrep
-                 - semgrep --config auto .
-   ```
-
-3. **Azure Pipelines** (`azure-pipelines.yml`)
-4. **Jenkins** (`Jenkinsfile`) — declarative pipeline with parallel stages
-5. **CircleCI** (`.circleci/config.yml`) — with orbs for Snyk and Trivy
-
-6. **Each template includes:**
-   - All 5 scan stages (secrets, SAST, SCA, IaC, containers)
-   - SARIF output where supported
-   - Artifact upload
-   - Configurable failure thresholds
-
-**Estimated effort:** 3–4 weeks
-**Key files:** `templates/gitlab-ci/`, `templates/bitbucket/`, `templates/azure/`, `templates/jenkins/`, `templates/circleci/`
-
----
-
-### 1.1.3 — Docker-Based Local Runner
+### 1.1.3 — Docker-Based Local Runner [COMPLETED ✅]
 
 **Goal:** Run full pipeline locally in a single container.
 
-**Steps:**
+**Achievements:**
+- Built the `fortressci/scan` all-in-one scanner image.
+- Orchestrated 7 security stages in `scripts/run-all.sh`.
 
-1. **Build all-in-one Docker image:**
-   ```dockerfile
-   FROM ubuntu:22.04
-   
-   # Install all scanning tools
-   RUN apt-get update && apt-get install -y python3 python3-pip nodejs npm curl git
-   
-   # TruffleHog
-   RUN curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh
-   
-   # Semgrep
-   RUN pip3 install semgrep
-   
-   # Snyk
-   RUN npm install -g snyk
-   
-   # Checkov
-   RUN pip3 install checkov
-   
-   # Trivy
-   RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
-   
-   # OWASP ZAP (headless)
-   RUN pip3 install zaproxy
-   
-   # Cosign
-   RUN curl -sSfL https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 -o /usr/local/bin/cosign && chmod +x /usr/local/bin/cosign
-   
-   COPY scripts/run-all.sh /usr/local/bin/fortressci-scan
-   ENTRYPOINT ["fortressci-scan"]
-   ```
-
-2. **Orchestration script** (`scripts/run-all.sh`):
-   ```bash
-   #!/bin/bash
-   set -e
-   WORKSPACE=${1:-.}
-   RESULTS_DIR="/results"
-   mkdir -p $RESULTS_DIR
-   
-   echo "🏰 FortressCI Local Scan"
-   echo "========================"
-   
-   echo "🔐 [1/5] Secret scanning..."
-   trufflehog filesystem $WORKSPACE --json > $RESULTS_DIR/secrets.json 2>&1 || true
-   
-   echo "🔍 [2/5] SAST (Semgrep)..."
-   semgrep --config auto --sarif -o $RESULTS_DIR/sast.sarif $WORKSPACE || true
-   
-   echo "📦 [3/5] SCA (Snyk)..."
-   snyk test --json > $RESULTS_DIR/sca.json $WORKSPACE || true
-   
-   echo "🏗️ [4/5] IaC (Checkov)..."
-   checkov -d $WORKSPACE --output-file-path $RESULTS_DIR -o sarif || true
-   
-   echo "🐳 [5/5] Container scan (Trivy)..."
-   if [ -f "$WORKSPACE/Dockerfile" ]; then
-       trivy fs --scanners vuln --format sarif -o $RESULTS_DIR/container.sarif $WORKSPACE
-   fi
-   
-   echo ""
-   echo "✅ Scan complete. Results in $RESULTS_DIR/"
-   
-   # Generate unified summary
-   python3 /usr/local/bin/summarize.py $RESULTS_DIR
-   ```
-
-3. **Usage:**
-   ```bash
-   docker run --rm -v $(pwd):/workspace -v $(pwd)/results:/results fortressci/scan /workspace
-   ```
-
-4. **Publish** to Docker Hub and ghcr.io
-
-**Estimated effort:** 2–3 weeks
-**Key files:** `Dockerfile`, `scripts/run-all.sh`, `scripts/summarize.py`
-
----
-
-### 1.1.4 — Unified Findings Dashboard
+### 1.1.4 — Unified Findings Dashboard [COMPLETED ✅]
 
 **Goal:** Single HTML report aggregating all tool results.
 
-**Steps:**
+**Achievements:**
+- Implemented `scripts/generate-report.py` with Jinja2 templating.
+- Created interactive HTML reports with severity charts and filters.
 
-1. **Create report generator** (`scripts/generate-report.py`):
-   ```python
-   import json, sys
-   from pathlib import Path
-   from jinja2 import Template
-   
-   def parse_sarif(path):
-       with open(path) as f:
-           data = json.load(f)
-       findings = []
-       for run in data.get("runs", []):
-           tool = run["tool"]["driver"]["name"]
-           for result in run.get("results", []):
-               findings.append({
-                   "tool": tool,
-                   "severity": result.get("level", "warning"),
-                   "message": result["message"]["text"],
-                   "file": result["locations"][0]["physicalLocation"]["artifactLocation"]["uri"],
-                   "line": result["locations"][0]["physicalLocation"]["region"]["startLine"],
-               })
-       return findings
-   
-   def generate_html(findings, output_path):
-       template = Template(open("templates/report.html.j2").read())
-       html = template.render(
-           findings=findings,
-           total=len(findings),
-           critical=len([f for f in findings if f["severity"] == "error"]),
-           high=len([f for f in findings if f["severity"] == "warning"]),
-       )
-       with open(output_path, "w") as f:
-           f.write(html)
-   ```
-
-2. **HTML template** with:
-   - Summary cards (total, by severity, by tool)
-   - Filterable/sortable findings table
-   - Waiver status column (cross-referenced with `.security/waivers.yml`)
-   - Dark mode support
-   - Tool breakdown pie chart
-   - Print-friendly layout
-
-3. **Integration:** Auto-generated at end of CI pipeline, uploaded as artifact
-
-**Estimated effort:** 2–3 weeks
-**Key files:** `scripts/generate-report.py`, `templates/report.html.j2`
-
----
-
-### 1.1.5 — PR Comment Summary
+### 1.1.5 — PR Comment Summary [COMPLETED ✅]
 
 **Goal:** Consolidated security summary on PRs.
 
-**Steps:**
+**Achievements:**
+- Added `post_summary.js` script for automated PR feedback.
+- Integrated high-level security status into the developer workflow.
 
-1. **GitHub Action step** added to `devsecops.yml`:
-   ```yaml
-   - name: Post Security Summary
-     if: github.event_name == 'pull_request'
-     uses: actions/github-script@v7
-     with:
-       script: |
-         const fs = require('fs');
-         const findings = JSON.parse(fs.readFileSync('results/summary.json', 'utf8'));
-         
-         const body = `## 🏰 FortressCI Security Summary
-         
-         | Tool | Critical | High | Medium | Low |
-         |------|----------|------|--------|-----|
-         | TruffleHog | ${findings.trufflehog.critical} | ${findings.trufflehog.high} | - | - |
-         | Semgrep | ${findings.semgrep.critical} | ${findings.semgrep.high} | ${findings.semgrep.medium} | ${findings.semgrep.low} |
-         | Snyk | ${findings.snyk.critical} | ${findings.snyk.high} | ${findings.snyk.medium} | ${findings.snyk.low} |
-         | Checkov | ${findings.checkov.critical} | ${findings.checkov.high} | ${findings.checkov.medium} | - |
-         | Trivy | ${findings.trivy.critical} | ${findings.trivy.high} | ${findings.trivy.medium} | ${findings.trivy.low} |
-         
-         **New findings:** ${findings.new_count} | **Resolved:** ${findings.resolved_count} | **Waivers:** ${findings.waiver_count}
-         `;
-         
-         github.rest.issues.createComment({
-           ...context.repo,
-           issue_number: context.payload.pull_request.number,
-           body: body
-         });
-   ```
-
-2. **Summary generation** — compare current scan against baseline (main branch last scan)
-
-**Estimated effort:** 1–2 weeks
-**Key files:** `.github/workflows/devsecops.yml`, `scripts/generate-summary.py`
-
----
-
-### 1.1.6 — Severity Threshold Gating & Waiver CLI
+### 1.1.6 — Severity Threshold Gating & Waiver CLI [COMPLETED ✅]
 
 **Goal:** Configurable failure thresholds and easier waiver management.
 
-**Steps:**
-
-1. **Config file** (`.fortressci.yml`):
-   ```yaml
-   thresholds:
-     fail_on: critical  # critical | high | medium | low | none
-     warn_on: high
-     
-   waivers:
-     require_approval: true
-     max_expiry_days: 90
-   ```
-
-2. **Gating logic** in CI:
-   ```bash
-   # scripts/check-thresholds.sh
-   CRITICAL=$(jq '.critical' results/summary.json)
-   HIGH=$(jq '.high' results/summary.json)
-   FAIL_ON=$(yq '.thresholds.fail_on' .fortressci.yml)
-   
-   case $FAIL_ON in
-     critical) [ "$CRITICAL" -gt 0 ] && exit 1 ;;
-     high) [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ] && exit 1 ;;
-     *) ;;
-   esac
-   ```
-
-3. **Waiver CLI** (`scripts/fortressci-waiver.sh`):
-   ```bash
-   # Add a waiver
-   fortressci waiver add \
-     --finding-id "semgrep:python.flask.security.open-redirect" \
-     --reason "False positive: URL is validated upstream" \
-     --expires "2026-06-01" \
-     --author "mackeh"
-   
-   # List active waivers
-   fortressci waiver list
-   
-   # Expire old waivers
-   fortressci waiver expire --before today
-   ```
-
-**Estimated effort:** 1–2 weeks
-**Key files:** `.fortressci.yml`, `scripts/fortressci-waiver.sh`, `scripts/check-thresholds.sh`
+**Achievements:**
+- Implemented `scripts/check-thresholds.sh` for pipeline gating.
+- Created `scripts/fortressci-waiver.sh` for documented security exceptions.
 
 ---
 
