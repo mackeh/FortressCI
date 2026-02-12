@@ -37,24 +37,23 @@ if [ "$CHECK_ACTIONS" = true ] && [ -d ".github/workflows" ]; then
 
     UNPINNED=""
     while IFS= read -r line; do
-        # Skip local actions (uses: ./) and comments
-        if echo "$line" | grep -qE "uses:\s*\./" ; then continue; fi
-        if echo "$line" | grep -qE "^\s*#" ; then continue; fi
-
-        # Extract the action reference
-        ref=$(echo "$line" | grep -oP 'uses:\s*\K\S+' || true)
+        # Extract the action reference from the line
+        # line is in format: filename:lineno:uses: action
+        ref=$(echo "$line" | sed 's/.*uses:[[:space:]]*//' | awk '{print $1}')
         [ -z "$ref" ] && continue
+
+        # Skip local actions (uses: ./)
+        if [[ "$ref" == ./* ]]; then continue; fi
 
         # Check if pinned to full SHA (40 hex chars)
         if ! echo "$ref" | grep -qE "@[a-f0-9]{40}$"; then
-            UNPINNED="${UNPINNED}\n  ⚠️  ${ref}"
             file=$(echo "$line" | cut -d: -f1)
             lineno=$(echo "$line" | cut -d: -f2)
             echo "  ⚠️  $ref"
             echo "     in $file:$lineno"
             WARNINGS=$((WARNINGS + 1))
         fi
-    done < <(grep -rn "uses:" .github/workflows/ 2>/dev/null | grep -v "^\s*#")
+    done < <(grep -rn "uses:" .github/workflows/ 2>/dev/null | grep -vE "^\s*#")
 
     if [ "$WARNINGS" -eq 0 ]; then
         echo "  ✅ All GitHub Actions are SHA-pinned"
@@ -85,13 +84,13 @@ if [ "$CHECK_DOCKER" = true ]; then
                 [ -z "$from_line" ] && continue
 
                 # Extract image reference (ignore ARG-based FROM, scratch, and build stages)
-                image=$(echo "$from_line" | grep -oiP 'FROM\s+\K\S+' || true)
+                image=$(echo "$from_line" | awk '{print $2}')
                 [ -z "$image" ] && continue
                 [[ "$image" == "scratch" ]] && continue
                 [[ "$image" == \$* ]] && continue  # ARG-based
 
-                # Strip AS alias
-                image=$(echo "$image" | sed 's/\s*[Aa][Ss]\s.*$//')
+                # Strip AS alias if present
+                image=$(echo "$image" | sed -E 's/[[:space:]]+[Aa][Ss][[:space:]]+.*$//')
 
                 # Check for digest pinning (@sha256:...)
                 if echo "$image" | grep -qE "@sha256:[a-f0-9]{64}"; then
