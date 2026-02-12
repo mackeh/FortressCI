@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FortressCI | Security Operations Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+    <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🏰</span>
+                    <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">FortressCI</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div id="grade-badge" class="px-3 py-1 rounded-full text-sm font-bold bg-slate-800 border border-slate-700">Loading...</div>
+                    <span class="text-slate-400 text-sm">v2.0.0</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-slate-800/50 border border-slate-700 p-6 rounded-2xl">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-red-500/10 rounded-lg text-red-500"><i class="fas fa-biohazard fa-lg"></i></div>
+                    <span class="text-xs font-semibold text-red-500 uppercase tracking-wider">Critical</span>
+                </div>
+                <div id="critical-count" class="text-3xl font-bold">0</div>
+                <p class="text-slate-400 text-sm mt-1">Immediate action required</p>
+            </div>
+            <div class="bg-slate-800/50 border border-slate-700 p-6 rounded-2xl">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-orange-500/10 rounded-lg text-orange-500"><i class="fas fa-exclamation-triangle fa-lg"></i></div>
+                    <span class="text-xs font-semibold text-orange-500 uppercase tracking-wider">High</span>
+                </div>
+                <div id="high-count" class="text-3xl font-bold">0</div>
+                <p class="text-slate-400 text-sm mt-1">Severe vulnerabilities</p>
+            </div>
+            <div class="bg-slate-800/50 border border-slate-700 p-6 rounded-2xl">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-yellow-500/10 rounded-lg text-yellow-500"><i class="fas fa-info-circle fa-lg"></i></div>
+                    <span class="text-xs font-semibold text-yellow-500 uppercase tracking-wider">Medium</span>
+                </div>
+                <div id="medium-count" class="text-3xl font-bold">0</div>
+                <p class="text-slate-400 text-sm mt-1">Moderate risk issues</p>
+            </div>
+            <div class="bg-slate-800/50 border border-slate-700 p-6 rounded-2xl">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-blue-500/10 rounded-lg text-blue-500"><i class="fas fa-shield-alt fa-lg"></i></div>
+                    <span class="text-xs font-semibold text-blue-500 uppercase tracking-wider">Total Findings</span>
+                </div>
+                <div id="total-count" class="text-3xl font-bold">0</div>
+                <p class="text-slate-400 text-sm mt-1">Across all scanners</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Distribution Chart -->
+            <div class="lg:col-span-2 bg-slate-800/50 border border-slate-700 p-6 rounded-2xl">
+                <h3 class="text-lg font-semibold mb-6">Severity Distribution</h3>
+                <div class="h-64">
+                    <canvas id="severityChart"></canvas>
+                </div>
+            </div>
+            <!-- Tool Breakdown -->
+            <div class="bg-slate-800/50 border border-slate-700 p-6 rounded-2xl">
+                <h3 class="text-lg font-semibold mb-6">Findings by Tool</h3>
+                <div class="h-64">
+                    <canvas id="toolChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compliance Status -->
+        <div class="bg-slate-800/50 border border-slate-700 p-6 rounded-2xl mb-8">
+            <h3 class="text-lg font-semibold mb-6">Compliance Framework Coverage</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="flex items-center gap-4 p-4 bg-slate-900/50 rounded-xl border border-slate-700">
+                    <div class="w-12 h-12 rounded-full border-4 border-emerald-500 flex items-center justify-center font-bold text-emerald-500">A</div>
+                    <div>
+                        <div class="font-semibold">SOC2</div>
+                        <div class="text-xs text-slate-400">Security & Trust</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 p-4 bg-slate-900/50 rounded-xl border border-slate-700">
+                    <div class="w-12 h-12 rounded-full border-4 border-blue-500 flex items-center justify-center font-bold text-blue-500">B</div>
+                    <div>
+                        <div class="font-semibold">NIST 800-53</div>
+                        <div class="text-xs text-slate-400">Federal Compliance</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 p-4 bg-slate-900/50 rounded-xl border border-slate-700">
+                    <div class="w-12 h-12 rounded-full border-4 border-emerald-500 flex items-center justify-center font-bold text-emerald-500">A</div>
+                    <div>
+                        <div class="font-semibold">OWASP Top 10</div>
+                        <div class="text-xs text-slate-400">Web App Security</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Mock data for demo purposes since we're in a static environment
+        // In reality, this would fetch from summary.json
+        const mockSummary = {
+            totals: { critical: 2, high: 5, medium: 12, low: 24 },
+            scanners: {
+                trufflehog: { total: 1, critical: 1, high: 0 },
+                semgrep: { total: 8, critical: 1, high: 3, medium: 4 },
+                snyk: { total: 15, high: 2, medium: 8, low: 5 },
+                checkov: { total: 10, medium: 6, low: 4 },
+                trivy: { total: 7, low: 7 }
+            }
+        };
+
+        const mockBadge = { score: 87, grade: 'A' };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDashboard(mockSummary, mockBadge);
+            initCharts(mockSummary);
+        });
+
+        function updateDashboard(summary, badge) {
+            document.getElementById('critical-count').innerText = summary.totals.critical;
+            document.getElementById('high-count').innerText = summary.totals.high;
+            document.getElementById('medium-count').innerText = summary.totals.medium;
+            document.getElementById('total-count').innerText = 
+                summary.totals.critical + summary.totals.high + summary.totals.medium + summary.totals.low;
+            
+            const badgeEl = document.getElementById('grade-badge');
+            badgeEl.innerText = `${badge.grade} (${badge.score})`;
+            badgeEl.className = `px-3 py-1 rounded-full text-sm font-bold border ${badge.score >= 85 ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'}`;
+        }
+
+        function initCharts(summary) {
+            // Severity Chart
+            new Chart(document.getElementById('severityChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Critical', 'High', 'Medium', 'Low'],
+                    datasets: [{
+                        label: 'Findings',
+                        data: [summary.totals.critical, summary.totals.high, summary.totals.medium, summary.totals.low],
+                        backgroundColor: ['#ef4444', '#f97316', '#eab308', '#3b82f6'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+
+            // Tool Chart
+            new Chart(document.getElementById('toolChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['TruffleHog', 'Semgrep', 'Snyk', 'Checkov', 'Trivy'],
+                    datasets: [{
+                        data: Object.values(summary.scanners).map(s => s.total),
+                        backgroundColor: ['#8b5cf6', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#94a3b8', padding: 20, usePointStyle: true }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

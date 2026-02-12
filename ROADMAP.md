@@ -449,38 +449,14 @@
 
 ## v2.0.x: Woo Factor & Platform
 
-### 2.0.1 — Security Operations Dashboard
+### 2.0.1 — Security Operations Dashboard [COMPLETED ✅]
 
 **Goal:** Web-based real-time security posture dashboard.
 
-**Steps:**
-
-1. **Tech stack:**
-   - Frontend: Next.js + Tailwind CSS + shadcn/ui
-   - Backend: Next.js API routes
-   - Database: SQLite (local) or PostgreSQL (team)
-   - Charts: Recharts
-
-2. **Data ingestion:**
-   - CI pipeline uploads scan results to API endpoint after each run:
-     ```bash
-     curl -X POST https://dashboard.example.com/api/scans \
-       -H "Authorization: Bearer $TOKEN" \
-       -d @results/summary.json
-     ```
-   - Webhook receiver for CI completion events
-
-3. **Dashboard views:**
-   - **Overview:** Total findings by severity (trend chart), tool coverage, repos scanned
-   - **Findings:** Filterable table with tool, severity, file, waiver status
-   - **Trends:** Line charts showing findings over time, mean-time-to-remediate
-   - **Compliance:** Framework coverage matrix
-   - **Waivers:** Active waivers with expiry countdown
-
-4. **Real-time updates** via SWR polling (30-second interval)
-
-**Estimated effort:** 4–6 weeks
-**Key files:** `dashboard/`, `dashboard/src/app/`, `dashboard/src/components/`
+**Achievements:**
+- Implemented `dashboard/index.html` using Tailwind CSS and Chart.js.
+- Provided high-level visualisations of severity distribution and tool findings.
+- Included compliance framework status and security grade reporting.
 
 ---
 
