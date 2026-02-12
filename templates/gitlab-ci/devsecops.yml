@@ -1,4 +1,4 @@
-stages: [secret-scan, sast, sca, iac-scan, container-scan, dast]
+stages: [secret-scan, sast, sca, iac-scan, container-scan, sbom, dast]
 
 variables:
   SECURE_LOG_LEVEL: "debug"
@@ -55,3 +55,14 @@ container-scan:
       container_scanning: trivy.sarif
     paths:
       - trivy.sarif
+
+sbom:
+  stage: sbom
+  image: anchore/syft:latest
+  script:
+    - syft . -o spdx-json=sbom-source.spdx.json
+    - syft . -o cyclonedx-json=sbom-source.cdx.json
+  artifacts:
+    paths:
+      - sbom-source.spdx.json
+      - sbom-source.cdx.json

@@ -27,3 +27,12 @@ pipelines:
               - checkov -d . --output-file-path checkov.sarif --output sarif
             artifacts:
               - checkov.sarif
+        - step:
+            name: SBOM Generation (Syft)
+            image: anchore/syft:latest
+            script:
+              - syft . -o spdx-json=sbom-source.spdx.json
+              - syft . -o cyclonedx-json=sbom-source.cdx.json
+            artifacts:
+              - sbom-source.spdx.json
+              - sbom-source.cdx.json
