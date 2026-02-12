@@ -71,12 +71,15 @@ There are no unit tests or linters — this is a blueprint/template project, not
 | `scripts/check-thresholds.sh` | Gating script — fails pipeline if findings exceed .fortressci.yml thresholds |
 | `scripts/fortressci-waiver.sh` | CLI for managing waivers (add/list/expire/remove) |
 | `scripts/check-pinning.sh` | Checks GitHub Actions SHA-pinning and Docker base image pinning |
+| `scripts/generate-compliance-report.py` | Maps findings to regulatory frameworks (SOC2, NIST, etc.) |
 | `CONTRIBUTING.md` | Community contribution guidelines |
 | `CODE_OF_CONDUCT.md` | Community code of conduct (Contributor Covenant) |
 | `.github/ISSUE_TEMPLATE/` | Bug report and feature request templates |
 | `.github/PULL_REQUEST_TEMPLATE.md` | Pull request template |
 | `.fortressci.yml` | Project config: severity thresholds, waiver policy, scanner toggles |
 | `.security/policy.yml` | Policy-as-code definitions (organisational security rules) |
+| `.security/compliance-mappings.yml` | Framework mappings for compliance reporting |
+| `.security/falco-rules.yaml` | Runtime security rules for container anomaly detection |
 | `.github/workflows/devsecops.yml` | Primary GitHub Actions pipeline |
 | `.github/scripts/post_summary.js` | Posts security summary as PR comment |
 | `.security/waivers.yml` | Approved security finding exceptions (with expiry dates) |

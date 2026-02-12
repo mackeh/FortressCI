@@ -86,6 +86,9 @@ Waivers are stored in `.security/waivers.yml`.
 - `scripts/check-thresholds.sh`: Gating logic for CI/CD pipelines.
 - `scripts/generate-sbom.sh`: Generates SPDX/CycloneDX SBOMs.
 - `scripts/fortressci-policy-check.sh`: Enforces organisational security policies.
+- `scripts/generate-compliance-report.py`: Maps findings to regulatory frameworks.
+- `.security/compliance-mappings.yml`: Mapping definitions for SOC2, NIST, etc.
+- `.security/falco-rules.yaml`: Runtime security rules for container anomaly detection.
 - `Dockerfile`: Defines the environment for the all-in-one security scanner.
 - `templates/`: Contains baseline configurations for CI platforms and security tools.
 - `.fortressci.yml`: Global configuration for the project's security posture.
