@@ -555,46 +555,14 @@
 
 ---
 
-### 2.0.5 — Auto-Remediation PRs
+### 2.0.5 — Auto-Remediation PRs [COMPLETED ✅]
 
 **Goal:** Automatically fix findings and open PRs.
 
-**Steps:**
-
-1. **Dependency upgrade PRs** (Snyk findings):
-   ```bash
-   snyk fix --dry-run > fix-plan.json
-   # Parse fix plan, apply changes, commit, open PR
-   ```
-
-2. **Config fix PRs** (Checkov/IaC findings):
-   ```bash
-   checkov -d terraform/ --fix
-   git diff --name-only  # See what changed
-   # Commit and open PR
-   ```
-
-3. **GitHub Action for auto-PR:**
-   ```yaml
-   - name: Auto-remediation
-     if: steps.scan.outputs.auto_fixable > 0
-     run: |
-       git checkout -b fix/fortressci-$(date +%Y%m%d)
-       # Apply fixes
-       snyk fix || true
-       checkov -d terraform/ --fix || true
-       git add .
-       git commit -m "fix: auto-remediation from FortressCI scan"
-       git push origin fix/fortressci-$(date +%Y%m%d)
-       gh pr create --title "🏰 FortressCI Auto-Remediation" \
-         --body "$(cat results/fix-summary.md)" \
-         --reviewer $REVIEWERS
-   ```
-
-4. **Fix summary** in PR body: what was fixed, which findings resolved, before/after severity counts
-
-**Estimated effort:** 2–3 weeks
-**Key files:** `.github/workflows/auto-remediation.yml`, `scripts/auto-fix.sh`
+**Achievements:**
+- Implemented `scripts/auto-fix.sh` to apply Snyk and Checkov fixes.
+- Integrated automated PR creation into the CI pipeline for scheduled runs.
+- Enabled self-healing capabilities for dependency and IaC vulnerabilities.
 
 ---
 
