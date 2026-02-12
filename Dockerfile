@@ -36,10 +36,11 @@ COPY scripts/fortressci-policy-check.sh /usr/local/bin/fortressci-policy-check
 COPY scripts/generate-compliance-report.py /usr/local/bin/generate-compliance-report
 COPY scripts/ai-triage.py /usr/local/bin/ai-triage
 COPY scripts/generate-badge.py /usr/local/bin/generate-badge
+COPY scripts/auto-fix.sh /usr/local/bin/auto-fix
 COPY templates/ /templates/
 
 # Set permissions
-RUN chmod +x /usr/local/bin/fortressci-scan /usr/local/bin/check-thresholds.sh /usr/local/bin/fortressci-waiver /usr/local/bin/generate-sbom /usr/local/bin/fortressci-policy-check /usr/local/bin/generate-compliance-report /usr/local/bin/ai-triage /usr/local/bin/generate-badge
+RUN chmod +x /usr/local/bin/fortressci-scan /usr/local/bin/check-thresholds.sh /usr/local/bin/fortressci-waiver /usr/local/bin/generate-sbom /usr/local/bin/fortressci-policy-check /usr/local/bin/generate-compliance-report /usr/local/bin/ai-triage /usr/local/bin/generate-badge /usr/local/bin/auto-fix
 
 # Create results directory
 RUN mkdir -p /results
