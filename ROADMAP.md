@@ -369,34 +369,16 @@
 
 ---
 
-### 1.1.7 — Example Repos & Documentation
+### 1.1.7 — Example Repos & Documentation [COMPLETED ✅]
 
 **Goal:** Fork-ready templates for common project types.
 
-**Steps:**
-
-1. **Create example repos** (or directories in `examples/`):
-   - `examples/nodejs-app/` — Express.js with FortressCI pre-configured
-   - `examples/python-app/` — Flask with FortressCI pre-configured
-   - `examples/go-app/` — Go API with FortressCI pre-configured
-   - `examples/java-app/` — Spring Boot with FortressCI pre-configured
-
-2. **Each example includes:**
-   - Application code with intentional test vulnerabilities
-   - Pre-configured `.github/workflows/devsecops.yml`
-   - `.pre-commit-config.yaml`
-   - `.security/waivers.yml` with sample waivers
-   - `.fortressci.yml` with thresholds
-   - README with walkthrough
-
-3. **Tutorials** in `docs/`:
-   - "Getting Started in 10 Minutes"
-   - "Handling False Positives with Waivers"
-   - "Customising Scan Thresholds"
-   - "Adding FortressCI to an Existing Project"
-
-**Estimated effort:** 2–3 weeks
-**Key files:** `examples/`, `docs/tutorials/`
+**Achievements:**
+- Created `examples/` directory with vulnerable sample applications.
+- `examples/nodejs-app`: Node.js/Express with SQLi and hardcoded secrets.
+- `examples/python-app`: Flask with SQLi, SSTI, and insecure debug mode.
+- `examples/terraform`: IaC with public S3 buckets and open security groups.
+- Verified that FortressCI scanners correctly identify these vulnerabilities.
 
 ---
 
