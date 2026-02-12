@@ -28,13 +28,13 @@ jobs:
 
       - name: TruffleHog (Diff Mode)
         if: github.event_name == 'push' || github.event_name == 'pull_request'
-        uses: trufflesecurity/trufflehog@6961f2bace57ab32b23b3ba40f8f420f6bc7e004 # v3.82.12
+        uses: trufflesecurity/trufflehog@abecab0d8fb9fb3e79366abc3909825488e9bb40 # v3.82.12
         with:
           extra_args: --only-verified --fail --no-update
 
       - name: TruffleHog (Baseline Mode)
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        uses: trufflesecurity/trufflehog@6961f2bace57ab32b23b3ba40f8f420f6bc7e004 # v3.82.12
+        uses: trufflesecurity/trufflehog@abecab0d8fb9fb3e79366abc3909825488e9bb40 # v3.82.12
         with:
           extra_args: --only-verified --fail --no-update --since-commit HEAD
 
@@ -52,14 +52,14 @@ jobs:
         continue-on-error: true
 
       - name: Upload SARIF
-        uses: actions/upload-artifact@6027bc5291242e2308107931669864239f884a44 # v4.4.0
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         if: always()
         with:
           name: semgrep.sarif
           path: semgrep.sarif
 
       - name: Upload Security SARIF (CodeQL)
-        uses: github/codeql-action/upload-sarif@66115715ae9c0202956f4d546f14066914995955 # v3.25.11
+        uses: github/codeql-action/upload-sarif@b611370bb5703a7efb587f9d136a52ea24c5c38c # v3.25.11
         if: always()
         continue-on-error: true
         with:
@@ -75,7 +75,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Node.js
-        uses: actions/setup-node@39225597dea6c34d620298be596b72fe05224403 # v4.1.0
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
           node-version: '16'
 
@@ -90,18 +90,24 @@ jobs:
           args: --severity-threshold=high --sarif-file-output=snyk.sarif
 
       - name: Upload SARIF
-        uses: actions/upload-artifact@6027bc5291242e2308107931669864239f884a44 # v4.4.0
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         if: always() && env.SNYK_TOKEN != ''
         with:
           name: snyk.sarif
           path: snyk.sarif
       
       - name: Upload Security SARIF (CodeQL)
-        uses: github/codeql-action/upload-sarif@66115715ae9c0202956f4d546f14066914995955 # v3.25.11
+        uses: github/codeql-action/upload-sarif@b611370bb5703a7efb587f9d136a52ea24c5c38c # v3.25.11
         if: always() && env.SNYK_TOKEN != ''
         continue-on-error: true
         with:
           sarif_file: snyk.sarif
+
+      - name: Snyk Gatekeeper
+        if: env.SNYK_TOKEN != ''
+        uses: snyk/actions/node@b9830575092c6dac41351111608672074e54e445 # v0.10.0
+        with:
+          args: --severity-threshold=high
 
   iac-scan:
     name: IaC Scan (Checkov)
@@ -120,14 +126,14 @@ jobs:
           output_file_path: checkov.sarif
 
       - name: Upload SARIF
-        uses: actions/upload-artifact@6027bc5291242e2308107931669864239f884a44 # v4.4.0
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         if: always()
         with:
           name: checkov.sarif
           path: checkov.sarif
 
       - name: Upload Security SARIF (CodeQL)
-        uses: github/codeql-action/upload-sarif@66115715ae9c0202956f4d546f14066914995955 # v3.25.11
+        uses: github/codeql-action/upload-sarif@b611370bb5703a7efb587f9d136a52ea24c5c38c # v3.25.11
         if: always()
         continue-on-error: true
         with:
@@ -173,8 +179,9 @@ jobs:
       - name: Build Docker Image
         run: docker build -t my-app:${{ github.sha }} .
 
+      # 1. Scan (Trivy)
       - name: Trivy Image Scan (SARIF)
-        uses: aquasecurity/trivy-action@d43c1f16c000d89748ed7a5cc2a74043e803b00e # v0.24.0
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
         with:
           image-ref: 'my-app:${{ github.sha }}'
           format: 'sarif'
@@ -183,27 +190,28 @@ jobs:
           vuln-type: 'os,library'
 
       - name: Upload SARIF
-        uses: actions/upload-artifact@6027bc5291242e2308107931669864239f884a44 # v4.4.0
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         if: always()
         with:
           name: trivy-results.sarif
           path: trivy-results.sarif
 
       - name: Upload Security SARIF (CodeQL)
-        uses: github/codeql-action/upload-sarif@66115715ae9c0202956f4d546f14066914995955 # v3.25.11
+        uses: github/codeql-action/upload-sarif@b611370bb5703a7efb587f9d136a52ea24c5c38c # v3.25.11
         if: always()
         continue-on-error: true
         with:
           sarif_file: trivy-results.sarif
 
       - name: Trivy Gatekeeper
-        uses: aquasecurity/trivy-action@d43c1f16c000d89748ed7a5cc2a74043e803b00e # v0.24.0
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
         with:
           image-ref: 'my-app:${{ github.sha }}'
           exit-code: '1'
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
 
+      # 2. Sign (Cosign) - Only runs if Trivy passes
       - name: Install Cosign
         uses: sigstore/cosign-installer@59ac5dcde5aa5408e01ad4409589d283b9d7a287 # v3.5.0
 
@@ -221,14 +229,14 @@ jobs:
           fi
 
       - name: Generate SBOM (SPDX)
-        uses: aquasecurity/trivy-action@d43c1f16c000d89748ed7a5cc2a74043e803b00e # v0.24.0
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
         with:
           image-ref: 'my-app:${{ github.sha }}'
           format: 'spdx-json'
           output: 'sbom.spdx.json'
 
       - name: Upload SBOM
-        uses: actions/upload-artifact@6027bc5291242e2308107931669864239f884a44 # v4.4.0
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
           name: sbom
           path: sbom.spdx.json
@@ -281,7 +289,7 @@ jobs:
           /usr/local/bin/syft dir:. -o cyclonedx-json > results/sbom-source.cdx.json
 
       - name: Upload SBOM Artifacts
-        uses: actions/upload-artifact@6027bc5291242e2308107931669864239f884a44 # v4.4.0
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
           name: sbom-reports
           path: results/sbom-*
@@ -297,7 +305,7 @@ jobs:
           echo "}" >> results/deployment-audit.json
 
       - name: Upload Audit Artifact
-        uses: actions/upload-artifact@6027bc5291242e2308107931669864239f884a44 # v4.4.0
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
           name: deployment-audit
           path: results/deployment-audit.json
