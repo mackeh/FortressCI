@@ -98,3 +98,12 @@ elif [ -f "scripts/ai-triage.py" ]; then
     echo ""
     python3 scripts/ai-triage.py --results-dir "$RESULTS_DIR" --config "$WORKSPACE/.fortressci.yml"
 fi
+
+# Generate Badge
+if [ -f "/usr/local/bin/generate-badge" ]; then
+    echo ""
+    /usr/local/bin/generate-badge "$RESULTS_DIR"
+elif [ -f "scripts/generate-badge.py" ]; then
+    echo ""
+    python3 scripts/generate-badge.py "$RESULTS_DIR"
+fi

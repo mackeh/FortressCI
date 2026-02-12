@@ -502,44 +502,14 @@
 
 ---
 
-### 2.0.2 — Fortress Score Badge
+### 2.0.2 — Fortress Score Badge [COMPLETED ✅]
 
 **Goal:** Embeddable trust signal.
 
-**Steps:**
-
-1. **Scoring algorithm:**
-   ```python
-   def fortress_score(scan_results):
-       score = 100
-       score -= scan_results['critical'] * 25
-       score -= scan_results['high'] * 10
-       score -= scan_results['medium'] * 3
-       score -= scan_results['low'] * 1
-       
-       # Bonus for good practices
-       if scan_results['cosign_signed']: score += 5
-       if scan_results['sbom_generated']: score += 5
-       if scan_results['slsa_provenance']: score += 5
-       if scan_results['all_actions_pinned']: score += 5
-       
-       score = max(0, min(100, score))
-       grade = next(g for threshold, g in [
-           (95, 'A+'), (85, 'A'), (70, 'B'), (50, 'C'), (25, 'D'), (0, 'F')
-       ] if score >= threshold)
-       
-       return score, grade
-   ```
-
-2. **Badge endpoint:** `GET /api/badge/{repo}` → shields.io redirect
-3. **Static badge** for repos without dashboard — generate markdown after scan
-4. **README snippet:**
-   ```markdown
-   ![FortressCI](https://img.shields.io/badge/FortressCI-A%2B%20(97)-brightgreen)
-   ```
-
-**Estimated effort:** 1 week
-**Key files:** `scripts/generate-badge.sh`, `dashboard/src/app/api/badge/route.ts`
+**Achievements:**
+- Implemented `scripts/generate-badge.py` to calculate security grades (A+ to F).
+- Integrated badge generation into local scans and CI pipelines.
+- Produced shields.io compatible badge URLs based on real-time scan results.
 
 ---
 
