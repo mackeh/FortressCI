@@ -37,6 +37,10 @@ python3 scripts/summarize.py <results_dir>
 ./scripts/fortressci-waiver.sh list
 ./scripts/fortressci-waiver.sh expire
 
+# Check supply chain pinning (GitHub Actions SHA + Docker base images)
+./scripts/check-pinning.sh
+./scripts/check-pinning.sh --strict  # fail on unpinned references
+
 # Generate Cosign signing keys
 ./scripts/generate_keys.sh
 ```
@@ -66,7 +70,9 @@ There are no unit tests or linters — this is a blueprint/template project, not
 | `scripts/summarize.py` | Aggregates scan results into summary.json with per-tool severity counts |
 | `scripts/check-thresholds.sh` | Gating script — fails pipeline if findings exceed .fortressci.yml thresholds |
 | `scripts/fortressci-waiver.sh` | CLI for managing waivers (add/list/expire/remove) |
+| `scripts/check-pinning.sh` | Checks GitHub Actions SHA-pinning and Docker base image pinning |
 | `.fortressci.yml` | Project config: severity thresholds, waiver policy, scanner toggles |
+| `.security/policy.yml` | Policy-as-code definitions (organisational security rules) |
 | `.github/workflows/devsecops.yml` | Primary GitHub Actions pipeline |
 | `.github/scripts/post_summary.js` | Posts security summary as PR comment |
 | `.security/waivers.yml` | Approved security finding exceptions (with expiry dates) |

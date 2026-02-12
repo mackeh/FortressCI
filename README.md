@@ -95,6 +95,43 @@ All templates implement the same 5 scan stages with platform-specific syntax.
 
 ---
 
+## Supply Chain Hardening
+
+Check that GitHub Actions are pinned to full SHAs and Docker base images are version-pinned:
+
+```bash
+# Check both actions and Dockerfiles (warnings only)
+./scripts/check-pinning.sh
+
+# Check only GitHub Actions
+./scripts/check-pinning.sh --actions
+
+# Check only Dockerfiles
+./scripts/check-pinning.sh --docker
+
+# Strict mode — exit 1 on any unpinned reference
+./scripts/check-pinning.sh --strict
+```
+
+---
+
+## Policy-as-Code
+
+Define organisational security policies in `.security/policy.yml`:
+
+```yaml
+policies:
+  - id: FCI-POL-001
+    name: All GitHub Actions must be SHA-pinned
+    check: action-pinning
+    severity: critical
+    enabled: true
+```
+
+Policies are enforced during scans and can be toggled per-project. See `.security/policy.yml` for all default policies.
+
+---
+
 ## Severity Thresholds
 
 Configure when your pipeline should fail or warn in `.fortressci.yml`:
@@ -196,7 +233,8 @@ Add these to your CI platform's secret store:
 │   ├── workflows/devsecops.yml    # Primary GitHub Actions pipeline
 │   └── scripts/post_summary.js    # PR comment posting script
 ├── .security/
-│   └── waivers.yml                # Security finding exceptions
+│   ├── waivers.yml                # Security finding exceptions
+│   └── policy.yml                 # Policy-as-code definitions
 ├── scripts/
 │   ├── fortressci-init.sh         # Setup wizard CLI
 │   ├── run-all.sh                 # Docker scan orchestrator
@@ -204,6 +242,7 @@ Add these to your CI platform's secret store:
 │   ├── summarize.py               # Summary JSON generator
 │   ├── check-thresholds.sh        # Severity threshold gating
 │   ├── fortressci-waiver.sh       # Waiver management CLI
+│   ├── check-pinning.sh           # Supply chain pinning checker
 │   └── generate_keys.sh           # Cosign key generation
 ├── templates/                     # CI/CD configs for all 6 platforms
 │   ├── github-actions/
