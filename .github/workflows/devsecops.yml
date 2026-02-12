@@ -72,6 +72,8 @@ jobs:
   sca-scan:
     name: SCA (Snyk)
     runs-on: ubuntu-latest
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -87,8 +89,6 @@ jobs:
       - name: Snyk Scan
         uses: snyk/actions/node@b9830575092c6dac41351111608672074e54e445 # v0.10.0
         continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --severity-threshold=high --sarif-file-output=snyk.sarif
 
@@ -109,8 +109,6 @@ jobs:
       - name: Snyk Gatekeeper
         uses: snyk/actions/node@b9830575092c6dac41351111608672074e54e445 # v0.10.0
         if: ${{ env.SNYK_TOKEN != '' }}
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --severity-threshold=high
 
@@ -150,6 +148,8 @@ jobs:
     permissions:
       contents: read
       pull-requests: write # Required to post comments
+    env:
+      INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -157,17 +157,16 @@ jobs:
       - name: Setup Infracost
         uses: infracost/actions/setup@91f7a6021289569735d487f98f6d525790a6e60b # v3.0.0
         with:
-          api-key: ${{ secrets.INFRACOST_API_KEY }}
+          api-key: ${{ env.INFRACOST_API_KEY }}
 
       - name: Infracost Breakdown
-        if: ${{ secrets.INFRACOST_API_KEY != '' }}
+        if: ${{ env.INFRACOST_API_KEY != '' }}
         run: |
           infracost breakdown --path ./terraform --format json --out-file infracost-usage.json
           
       - name: Post Infracost Comment
-        if: github.event_name == 'pull_request' && secrets.INFRACOST_API_KEY != ''
+        if: github.event_name == 'pull_request' && env.INFRACOST_API_KEY != ''
         env:
-          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
             infracost comment github --path infracost-usage.json --repo $GITHUB_REPOSITORY --pull-request ${{ github.event.pull_request.number }} --behavior update
@@ -280,6 +279,8 @@ jobs:
     if: always()
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -320,9 +321,7 @@ jobs:
         run: python3 scripts/generate-compliance-report.py results/ .security/compliance-mappings.yml
 
       - name: AI Triage
-        if: always()
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        if: always() && env.ANTHROPIC_API_KEY != ''
         run: python3 scripts/ai-triage.py --results-dir results/ --config .fortressci.yml
 
       - name: Generate Security Badge
