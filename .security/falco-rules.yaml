@@ -1,0 +1,19 @@
+# FortressCI Runtime Security — Falco Rules
+# Custom rules for detecting anomalous container behaviour.
+
+- rule: Unexpected outbound connection
+  desc: Detect unexpected outbound network connections from application containers
+  condition: >
+    evt.type=connect and fd.typechar=4 and
+    not fd.sip in (allowed_ips) and
+    container.name startswith "app-"
+  output: "Unexpected outbound connection (container=%container.name ip=%fd.sip port=%fd.sport)"
+  priority: WARNING
+
+- rule: Sensitive file access
+  desc: Detect reads of sensitive files
+  condition: >
+    evt.type in (open, openat) and
+    fd.name in (/etc/shadow, /etc/passwd, /proc/self/environ)
+  output: "Sensitive file access (file=%fd.name container=%container.name)"
+  priority: CRITICAL

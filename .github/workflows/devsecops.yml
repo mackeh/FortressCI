@@ -278,6 +278,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [secret-scan, sast-scan, sca-scan, iac-scan, container-build-sign, dast-scan]
     if: always()
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -313,6 +315,23 @@ jobs:
 
       - name: Run Policy Check
         run: ./scripts/fortressci-policy-check.sh .security/policy.yml results/
+
+      - name: Generate Hashes
+        id: hash
+        run: |
+          cd results
+          echo "hashes=$(sha256sum sbom-source.spdx.json sbom-source.cdx.json ../deployment-audit.json | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+  provenance:
+    needs: [compliance-audit]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    with:
+      base64-subjects: "${{ needs.compliance-audit.outputs.hashes }}"
+      upload-assets: true
 
   pr-feedback:
     name: Developer Feedback (PR Comments)
