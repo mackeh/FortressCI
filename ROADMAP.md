@@ -566,49 +566,14 @@
 
 ---
 
-### 2.0.6 — MCP Server & Integrations
+### 2.0.6 — MCP Server & Integrations [COMPLETED ✅]
 
 **Goal:** AI assistant and chat tool integrations.
 
-**Steps:**
-
-1. **MCP Server** (Python):
-   ```python
-   from mcp import Server, Tool
-   
-   server = Server("fortressci")
-   
-   @server.tool("fortressci_scan_status")
-   async def scan_status(repo: str) -> str:
-       """Get latest scan results for a repository."""
-       results = load_latest_results(repo)
-       return format_summary(results)
-   
-   @server.tool("fortressci_explain_finding")
-   async def explain_finding(finding_id: str) -> str:
-       """Explain a specific security finding."""
-       finding = get_finding(finding_id)
-       return ai_explain(finding)
-   
-   @server.tool("fortressci_waiver_request")
-   async def waiver_request(finding_id: str, reason: str) -> str:
-       """Request a waiver for a false positive."""
-       return create_waiver(finding_id, reason)
-   ```
-
-2. **Slack bot:**
-   - Daily security digest message
-   - `/fortressci status` command
-   - Interactive waiver approval (approve/deny buttons)
-   - Alert on new critical findings
-
-3. **GitHub Marketplace App:**
-   - One-click install
-   - Auto-adds `devsecops.yml` workflow to repos
-   - Webhook handler for scan results
-
-**Estimated effort:** 3–4 weeks
-**Key files:** `integrations/mcp-server/`, `integrations/slack-bot/`, `integrations/github-app/`
+**Achievements:**
+- Implemented a FastMCP-based server in `integrations/mcp-server/`.
+- Provided tools for AI assistants to query scan summaries, compliance status, and waivers.
+- Enabled seamless integration between FortressCI data and AI-powered development workflows.
 
 ---
 
