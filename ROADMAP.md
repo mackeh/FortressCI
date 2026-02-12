@@ -534,11 +534,14 @@
 - Managed scanning infrastructure
 - **Effort:** 3–6 months
 
-### Cross-Repo Dependency Graph
-- Visualise how vulnerabilities propagate across shared libraries
-- "Upgrading `lodash` in `shared-utils` fixes 14 downstream repos"
-- Requires org-wide scan data aggregation
-- **Effort:** 4–6 weeks
+### Cross-Repo Dependency Graph [IN PROGRESS 🏗️]
+
+**Goal:** Visualise how vulnerabilities propagate across shared libraries.
+
+**Achievements:**
+- Implemented `scripts/cross-repo-analyzer.py` to aggregate SBOM data across multiple projects.
+- Enabled identification of shared dependencies and their usage across the organisation.
+- Automated generation of cross-repo dependency reports in JSON format.
 
 ### Zero-Trust CI Pipeline
 - Every step runs in isolated, attested environment
