@@ -87,6 +87,10 @@ Waivers are stored in `.security/waivers.yml`.
 - `scripts/generate-sbom.sh`: Generates SPDX/CycloneDX SBOMs.
 - `scripts/fortressci-policy-check.sh`: Enforces organisational security policies.
 - `scripts/generate-compliance-report.py`: Maps findings to regulatory frameworks.
+- `scripts/ai-triage.py`: Uses LLMs to explain and prioritise security findings.
+- `scripts/generate-badge.py`: Calculates security scores and generates badge URLs.
+- `scripts/auto-fix.sh`: Automatically applies security remediation fixes.
+- `integrations/mcp-server/server.py`: MCP server for AI assistant integration.
 - `.security/compliance-mappings.yml`: Mapping definitions for SOC2, NIST, etc.
 - `.security/falco-rules.yaml`: Runtime security rules for container anomaly detection.
 - `Dockerfile`: Defines the environment for the all-in-one security scanner.

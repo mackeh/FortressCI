@@ -71,7 +71,11 @@ There are no unit tests or linters — this is a blueprint/template project, not
 | `scripts/check-thresholds.sh` | Gating script — fails pipeline if findings exceed .fortressci.yml thresholds |
 | `scripts/fortressci-waiver.sh` | CLI for managing waivers (add/list/expire/remove) |
 | `scripts/check-pinning.sh` | Checks GitHub Actions SHA-pinning and Docker base image pinning |
+| `scripts/ai-triage.py` | LLM-based findings analysis and prioritisation |
+| `scripts/auto-fix.sh` | Automatically applies security remediation fixes (Snyk/Checkov) |
+| `scripts/generate-badge.py` | Calculates security score (A+-F) and badge URL |
 | `scripts/generate-compliance-report.py` | Maps findings to regulatory frameworks (SOC2, NIST, etc.) |
+| `integrations/mcp-server/` | Model Context Protocol (MCP) server for AI assistants |
 | `CONTRIBUTING.md` | Community contribution guidelines |
 | `CODE_OF_CONDUCT.md` | Community code of conduct (Contributor Covenant) |
 | `.github/ISSUE_TEMPLATE/` | Bug report and feature request templates |
