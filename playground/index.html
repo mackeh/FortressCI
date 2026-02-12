@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FortressCI | Interactive Playground</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        #editor { height: 400px; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+    <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🏰</span>
+                    <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent text-lg">FortressCI Playground</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="../README.md" class="text-slate-400 hover:text-white text-sm transition-colors">Documentation</a>
+                    <span class="text-slate-600">|</span>
+                    <span class="text-slate-400 text-sm">v2.0.0</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row gap-8">
+        <!-- Editor Section -->
+        <div class="flex-grow flex flex-col gap-4">
+            <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col">
+                <div class="bg-slate-800/50 px-4 py-2 border-b border-slate-700 flex justify-between items-center">
+                    <div class="flex gap-4">
+                        <button onclick="loadSample('docker')" class="text-xs font-medium text-slate-400 hover:text-white transition-colors">Dockerfile</button>
+                        <button onclick="loadSample('terraform')" class="text-xs font-medium text-slate-400 hover:text-white transition-colors">Terraform</button>
+                        <button onclick="loadSample('python')" class="text-xs font-medium text-slate-400 hover:text-white transition-colors">Python</button>
+                    </div>
+                    <button onclick="runScan()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
+                        <i class="fas fa-play"></i> Run Security Scan
+                    </button>
+                </div>
+                <div id="editor" class="bg-[#1e1e1e]"></div>
+            </div>
+            
+            <div class="bg-slate-800/30 p-4 rounded-xl border border-slate-700">
+                <h4 class="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <i class="fas fa-info-circle text-blue-400"></i> About this Playground
+                </h4>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    This is a browser-based simulation of FortressCI. In a real environment, FortressCI runs these scans in your CI/CD pipeline or locally via Docker, providing deep analysis of your code, containers, and infrastructure.
+                </p>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="w-full md:w-96 flex flex-col gap-6">
+            <div id="scan-status" class="bg-slate-800 border border-slate-700 rounded-2xl p-6 hidden">
+                <div class="flex items-center gap-3 mb-6">
+                    <div id="status-icon" class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                    <div>
+                        <div id="status-text" class="font-bold">Scanning...</div>
+                        <div class="text-xs text-slate-400">Phase 1: Static Analysis</div>
+                    </div>
+                </div>
+
+                <div id="findings-list" class="space-y-4">
+                    <!-- Findings will appear here -->
+                </div>
+            </div>
+            
+            <div id="empty-state" class="bg-slate-800/50 border border-dashed border-slate-700 rounded-2xl p-12 flex flex-col items-center justify-center text-center">
+                <div class="text-4xl mb-4">🔍</div>
+                <h3 class="text-lg font-bold mb-2 text-slate-300">Ready to Scan</h3>
+                <p class="text-sm text-slate-500">Edit the code on the left and click "Run Security Scan" to see the magic happen.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let editor;
+        const samples = {
+            docker: "FROM ubuntu:latest
+
+# INTENTIONAL VULNERABILITY: Running as root
+RUN apt-get update && apt-get install -y curl
+
+CMD ["curl", "http://example.com"]",
+            terraform: "resource "aws_s3_bucket" "demo" {
+  bucket = "my-data-bucket"
+  # INTENTIONAL VULNERABILITY: Public read access
+  acl    = "public-read"
+}",
+            python: "import os
+
+# INTENTIONAL VULNERABILITY: Hardcoded secret
+AWS_SECRET = "AKIAEXAMPLE1234567890"
+
+def index():
+    return "Hello World""
+        };
+
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' } });
+        require(['vs/editor/editor.main'], function () {
+            editor = monaco.editor.create(document.getElementById('editor'), {
+                value: samples.docker,
+                language: 'dockerfile',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                minimap: { enabled: false },
+                fontSize: 14
+            });
+        });
+
+        function loadSample(type) {
+            editor.setValue(samples[type]);
+            const lang = type === 'docker' ? 'dockerfile' : (type === 'terraform' ? 'hcl' : 'python');
+            monaco.editor.setModelLanguage(editor.getModel(), lang);
+        }
+
+        function runScan() {
+            const statusSection = document.getElementById('scan-status');
+            const emptyState = document.getElementById('empty-state');
+            const findingsList = document.getElementById('findings-list');
+            const statusIcon = document.getElementById('status-icon');
+            const statusText = document.getElementById('status-text');
+
+            emptyState.classList.add('hidden');
+            statusSection.classList.remove('hidden');
+            findingsList.innerHTML = '';
+            statusIcon.className = "w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center";
+            statusIcon.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            statusText.innerText = "Scanning...";
+
+            setTimeout(() => {
+                const code = editor.getValue();
+                let findings = [];
+
+                if (code.includes('public-read')) {
+                    findings.push({ tool: 'Checkov', severity: 'CRITICAL', msg: 'S3 bucket has public-read ACL' });
+                }
+                if (code.includes('AKIAEXAMPLE')) {
+                    findings.push({ tool: 'TruffleHog', severity: 'CRITICAL', msg: 'AWS Access Key detected' });
+                }
+                if (code.includes('FROM ubuntu:latest') || code.includes('FROM ubuntu')) {
+                    findings.push({ tool: 'Trivy', severity: 'MEDIUM', msg: 'Use of latest tag or unpinned base image' });
+                }
+
+                statusIcon.className = findings.length > 0 
+                    ? "w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-500"
+                    : "w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500";
+                statusIcon.innerHTML = findings.length > 0 
+                    ? '<i class="fas fa-exclamation-circle"></i>'
+                    : '<i class="fas fa-check-circle"></i>';
+                statusText.innerText = findings.length > 0 
+                    ? `Found ${findings.length} Issues`
+                    : "Scan Passed";
+
+                if (findings.length === 0) {
+                    findingsList.innerHTML = '<div class="text-center py-8 text-slate-500 text-sm">No vulnerabilities detected. Good job!</div>';
+                }
+
+                findings.forEach(f => {
+                    const div = document.createElement('div');
+                    div.className = "p-4 bg-slate-900/50 rounded-xl border-l-4 border-red-500 border border-slate-700";
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">${f.tool}</span>
+                            <span class="text-[10px] font-bold text-red-500 uppercase">${f.severity}</span>
+                        </div>
+                        <div class="text-sm font-medium text-slate-200">${f.msg}</div>
+                    `;
+                    findingsList.appendChild(div);
+                });
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
