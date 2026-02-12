@@ -37,10 +37,11 @@ COPY scripts/generate-compliance-report.py /usr/local/bin/generate-compliance-re
 COPY scripts/ai-triage.py /usr/local/bin/ai-triage
 COPY scripts/generate-badge.py /usr/local/bin/generate-badge
 COPY scripts/auto-fix.sh /usr/local/bin/auto-fix
+COPY scripts/build-attack-graph.py /usr/local/bin/build-attack-graph
 COPY templates/ /templates/
 
 # Set permissions
-RUN chmod +x /usr/local/bin/fortressci-scan /usr/local/bin/check-thresholds.sh /usr/local/bin/fortressci-waiver /usr/local/bin/generate-sbom /usr/local/bin/fortressci-policy-check /usr/local/bin/generate-compliance-report /usr/local/bin/ai-triage /usr/local/bin/generate-badge /usr/local/bin/auto-fix
+RUN chmod +x /usr/local/bin/fortressci-scan /usr/local/bin/check-thresholds.sh /usr/local/bin/fortressci-waiver /usr/local/bin/generate-sbom /usr/local/bin/fortressci-policy-check /usr/local/bin/generate-compliance-report /usr/local/bin/ai-triage /usr/local/bin/generate-badge /usr/local/bin/auto-fix /usr/local/bin/build-attack-graph
 
 # Create results directory
 RUN mkdir -p /results

@@ -107,3 +107,12 @@ elif [ -f "scripts/generate-badge.py" ]; then
     echo ""
     python3 scripts/generate-badge.py "$RESULTS_DIR"
 fi
+
+# Build Attack Graph
+if [ -f "/usr/local/bin/build-attack-graph" ]; then
+    echo ""
+    /usr/local/bin/build-attack-graph "$RESULTS_DIR"
+elif [ -f "scripts/build-attack-graph.py" ]; then
+    echo ""
+    python3 scripts/build-attack-graph.py "$RESULTS_DIR"
+fi

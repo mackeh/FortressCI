@@ -471,34 +471,14 @@
 
 ---
 
-### 2.0.3 — Attack Surface Map
+### 2.0.3 — Attack Surface Map [COMPLETED ✅]
 
 **Goal:** Visualise how vulnerabilities chain together.
 
-**Steps:**
-
-1. **Graph construction:**
-   - Nodes: findings from each tool
-   - Edges: relationships (e.g., vulnerable dependency → used in endpoint → exposed without auth)
-   - Data sources: cross-reference Semgrep file/line with Snyk package with Trivy image with ZAP endpoint
-
-2. **Frontend visualisation** (D3.js force-directed graph):
-   - Colour nodes by tool (Semgrep=blue, Snyk=green, Trivy=orange, ZAP=red)
-   - Edge thickness by risk
-   - Click node to see finding details
-   - Hover to see chain narrative
-
-3. **Chain narrative generation:**
-   ```python
-   def generate_narrative(chain):
-       return f"This {chain.snyk.package} dependency (CVE-{chain.snyk.cve}) " \
-              f"is used in {chain.semgrep.file}:{chain.semgrep.line} " \
-              f"which is exposed at {chain.zap.endpoint} " \
-              f"running in a container with {chain.trivy.finding}."
-   ```
-
-**Estimated effort:** 3–4 weeks
-**Key files:** `dashboard/src/components/AttackSurface.tsx`, `scripts/build-attack-graph.py`
+**Achievements:**
+- Implemented `scripts/build-attack-graph.py` to generate relationship graphs.
+- Visualised the path from external entry points to sensitive assets.
+- Integrated attack surface analysis into CI/CD and local scan workflows.
 
 ---
 
