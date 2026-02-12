@@ -15,6 +15,7 @@ FortressCI is a "secure-by-default" DevSecOps platform blueprint designed to imp
   - **Container:** [Trivy](https://github.com/aquasecurity/trivy)
   - **DAST:** [OWASP ZAP](https://www.zaproxy.org/)
   - **Signing:** [Cosign](https://github.com/sigstore/cosign)
+  - **SBOM:** [Syft](https://github.com/anchore/syft)
 
 ## Building and Running
 
@@ -83,6 +84,8 @@ Waivers are stored in `.security/waivers.yml`.
 - `scripts/run-all.sh`: Orchestration script for the Docker scanner.
 - `scripts/fortressci-waiver.sh`: CLI for managing security exceptions.
 - `scripts/check-thresholds.sh`: Gating logic for CI/CD pipelines.
+- `scripts/generate-sbom.sh`: Generates SPDX/CycloneDX SBOMs.
+- `scripts/fortressci-policy-check.sh`: Enforces organisational security policies.
 - `Dockerfile`: Defines the environment for the all-in-one security scanner.
 - `templates/`: Contains baseline configurations for CI platforms and security tools.
 - `.fortressci.yml`: Global configuration for the project's security posture.
