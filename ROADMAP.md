@@ -454,41 +454,14 @@
 
 ---
 
-### 1.2.6 — Compliance Report Generation
+### 1.2.6 — Compliance Report Generation [COMPLETED ✅]
 
 **Goal:** Map findings to compliance frameworks.
 
-**Steps:**
-
-1. **Create mapping file** (`.security/compliance-mappings.yml`):
-   ```yaml
-   mappings:
-     - tool: semgrep
-       rule_prefix: "python.flask.security"
-       frameworks:
-         - { framework: "SOC2", control: "CC6.1" }
-         - { framework: "NIST-800-53", control: "SI-10" }
-         - { framework: "OWASP", category: "A03:2021-Injection" }
-     
-     - tool: trivy
-       category: "os-vulnerability"
-       frameworks:
-         - { framework: "SOC2", control: "CC7.1" }
-         - { framework: "CIS", benchmark: "4.4" }
-   ```
-
-2. **Report generator** (`scripts/generate-compliance-report.py`):
-   - Load scan results + compliance mappings
-   - Generate HTML/PDF report with:
-     - Framework coverage matrix (control → status)
-     - Findings mapped to specific controls
-     - Gap analysis (controls without coverage)
-     - Remediation priority list
-
-3. **Template:** Professional-looking report suitable for auditors
-
-**Estimated effort:** 2–3 weeks
-**Key files:** `.security/compliance-mappings.yml`, `scripts/generate-compliance-report.py`, `templates/compliance-report.html.j2`
+**Achievements:**
+- Defined framework mappings in `.security/compliance-mappings.yml` (SOC2, NIST, OWASP).
+- Implemented `scripts/generate-compliance-report.py` to automate mapping.
+- Integrated compliance reporting into both local scans and CI/CD pipelines.
 
 ---
 

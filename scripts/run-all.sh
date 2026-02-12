@@ -78,3 +78,14 @@ elif [ -f "scripts/fortressci-policy-check.sh" ]; then
     echo "🛡️ Running policy checks (local)..."
     bash scripts/fortressci-policy-check.sh "$WORKSPACE/.security/policy.yml" "$RESULTS_DIR"
 fi
+
+# Generate Compliance Report
+if [ -f "/usr/local/bin/generate-compliance-report" ]; then
+    echo ""
+    echo "📋 Generating compliance report..."
+    python3 /usr/local/bin/generate-compliance-report "$RESULTS_DIR" "$WORKSPACE/.security/compliance-mappings.yml"
+elif [ -f "scripts/generate-compliance-report.py" ]; then
+    echo ""
+    echo "📋 Generating compliance report (local)..."
+    python3 scripts/generate-compliance-report.py "$RESULTS_DIR" "$WORKSPACE/.security/compliance-mappings.yml"
+fi

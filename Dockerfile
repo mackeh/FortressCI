@@ -33,10 +33,11 @@ COPY scripts/check-thresholds.sh /usr/local/bin/check-thresholds.sh
 COPY scripts/fortressci-waiver.sh /usr/local/bin/fortressci-waiver
 COPY scripts/generate-sbom.sh /usr/local/bin/generate-sbom
 COPY scripts/fortressci-policy-check.sh /usr/local/bin/fortressci-policy-check
+COPY scripts/generate-compliance-report.py /usr/local/bin/generate-compliance-report
 COPY templates/ /templates/
 
 # Set permissions
-RUN chmod +x /usr/local/bin/fortressci-scan /usr/local/bin/check-thresholds.sh /usr/local/bin/fortressci-waiver /usr/local/bin/generate-sbom /usr/local/bin/fortressci-policy-check
+RUN chmod +x /usr/local/bin/fortressci-scan /usr/local/bin/check-thresholds.sh /usr/local/bin/fortressci-waiver /usr/local/bin/generate-sbom /usr/local/bin/fortressci-policy-check /usr/local/bin/generate-compliance-report
 
 # Create results directory
 RUN mkdir -p /results
