@@ -31,7 +31,17 @@ else
     echo "No Dockerfile found. Skipping container scan."
 fi
 
-echo "🛡️ [6/6] OWASP ZAP (Baseline)..."
+echo "📦 [6/6] SBOM Generation (Syft)..."
+if [ -f "/usr/local/bin/generate-sbom" ]; then
+    bash /usr/local/bin/generate-sbom "$WORKSPACE" "$RESULTS_DIR"
+else
+    # Local run outside of docker context fallback
+    if [ -f "scripts/generate-sbom.sh" ]; then
+        bash scripts/generate-sbom.sh "$WORKSPACE" "$RESULTS_DIR"
+    fi
+fi
+
+echo "🛡️ [7/7] OWASP ZAP (Baseline)..."
 # ZAP is typically for running apps. We'll skip for static analysis or add a placeholder.
 echo "Skipping ZAP for static analysis run."
 
@@ -56,4 +66,15 @@ if [ -f "$WORKSPACE/.fortressci.yml" ] && [ -f "/usr/local/bin/check-thresholds.
     echo ""
     echo "🔒 Running threshold checks..."
     bash /usr/local/bin/check-thresholds.sh "$RESULTS_DIR" "$WORKSPACE/.fortressci.yml"
+fi
+
+# Run policy check if config exists
+if [ -f "$WORKSPACE/.security/policy.yml" ] && [ -f "/usr/local/bin/fortressci-policy-check" ]; then
+    echo ""
+    echo "🛡️ Running policy checks..."
+    bash /usr/local/bin/fortressci-policy-check "$WORKSPACE/.security/policy.yml" "$RESULTS_DIR"
+elif [ -f "scripts/fortressci-policy-check.sh" ]; then
+    echo ""
+    echo "🛡️ Running policy checks (local)..."
+    bash scripts/fortressci-policy-check.sh "$WORKSPACE/.security/policy.yml" "$RESULTS_DIR"
 fi
