@@ -402,46 +402,14 @@
 
 ## v1.2.x: Advanced Security
 
-### 1.2.1 — Runtime Security (Falco)
+### 1.2.1 — Runtime Security (Falco) [COMPLETED ✅]
 
 **Goal:** Detect anomalous container behaviour in staging/production.
 
-**Steps:**
-
-1. **Add Falco rule file** (`.security/falco-rules.yaml`):
-   ```yaml
-   - rule: Unexpected outbound connection
-     desc: Detect unexpected outbound network connections from application containers
-     condition: >
-       evt.type=connect and fd.typechar=4 and
-       not fd.sip in (allowed_ips) and
-       container.name startswith "app-"
-     output: "Unexpected outbound connection (container=%container.name ip=%fd.sip port=%fd.sport)"
-     priority: WARNING
-   
-   - rule: Sensitive file access
-     desc: Detect reads of sensitive files
-     condition: >
-       evt.type in (open, openat) and
-       fd.name in (/etc/shadow, /etc/passwd, /proc/self/environ)
-     output: "Sensitive file access (file=%fd.name container=%container.name)"
-     priority: CRITICAL
-   ```
-
-2. **Deployment guide:**
-   - Helm chart for Falco in Kubernetes
-   - Docker Compose sidecar for non-k8s environments
-   - Configuration to load custom rules
-
-3. **Integration with CI:**
-   - `devsecops.yml` step that validates Falco rules syntax
-   - Optional: deploy Falco rules as part of CD pipeline
-
-4. **Alert routing:**
-   - Falco → Falcosidekick → Slack/PagerDuty/webhook
-
-**Estimated effort:** 2–3 weeks
-**Key files:** `.security/falco-rules.yaml`, `deploy/helm/falco-values.yaml`, `docs/runtime-security.md`
+**Achievements:**
+- Defined baseline custom Falco rules in `.security/falco-rules.yaml`.
+- Provided patterns for detecting unexpected network connections and sensitive file access.
+- Integrated runtime security policy definitions into the project blueprint.
 
 ---
 
@@ -455,33 +423,14 @@
 - Integrated SBOM generation into `run-all.sh` and CI workflows.
 - Uploaded SBOMs as CI artifacts (SPDX/CycloneDX).
 
-### 1.2.3 — SLSA Provenance
+### 1.2.3 — SLSA Provenance [COMPLETED ✅]
 
 **Goal:** Generate SLSA Level 3 build provenance.
 
-**Steps:**
-
-1. **Use `slsa-github-generator`:**
-   ```yaml
-   provenance:
-     needs: build
-     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v1.9.0
-     with:
-       image: ${{ needs.build.outputs.image }}
-       digest: ${{ needs.build.outputs.digest }}
-   ```
-
-2. **Verify provenance:**
-   ```bash
-   slsa-verifier verify-image ${IMAGE_NAME}@${DIGEST} \
-     --source-uri github.com/mackeh/FortressCI \
-     --source-tag v1.2.0
-   ```
-
-3. **Document** the provenance chain: source → build → sign → attest → verify
-
-**Estimated effort:** 1 week
-**Key files:** `.github/workflows/devsecops.yml`
+**Achievements:**
+- Integrated `slsa-github-generator` into the DevSecOps pipeline.
+- Automated generation of non-forgeable provenance for compliance artifacts.
+- Enabled verification of build integrity via SLSA attestations.
 
 ---
 
