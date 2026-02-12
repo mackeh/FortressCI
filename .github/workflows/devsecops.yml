@@ -316,6 +316,9 @@ jobs:
       - name: Run Policy Check
         run: ./scripts/fortressci-policy-check.sh .security/policy.yml results/
 
+      - name: Generate Compliance Report
+        run: python3 scripts/generate-compliance-report.py results/ .security/compliance-mappings.yml
+
       - name: Generate Hashes
         id: hash
         run: |
