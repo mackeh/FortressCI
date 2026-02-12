@@ -91,6 +91,7 @@ Waivers are stored in `.security/waivers.yml`.
 - `scripts/generate-badge.py`: Calculates security scores and generates badge URLs.
 - `scripts/auto-fix.sh`: Automatically applies security remediation fixes.
 - `scripts/build-attack-graph.py`: Generates vulnerability chain relationship graphs.
+- `scripts/cross-repo-analyzer.py`: Analyzes shared dependencies across multiple projects.
 - `integrations/mcp-server/server.py`: MCP server for AI assistant integration.
 - `dashboard/index.html`: Web-based security operations dashboard.
 - `playground/index.html`: Interactive browser-based security scan simulator.

@@ -74,6 +74,7 @@ There are no unit tests or linters — this is a blueprint/template project, not
 | `scripts/ai-triage.py` | LLM-based findings analysis and prioritisation |
 | `scripts/auto-fix.sh` | Automatically applies security remediation fixes (Snyk/Checkov) |
 | `scripts/build-attack-graph.py` | Generates vulnerability chain relationship graphs |
+| `scripts/cross-repo-analyzer.py` | Analyzes shared dependencies across multiple repositories |
 | `scripts/generate-badge.py` | Calculates security score (A+-F) and badge URL |
 | `scripts/generate-compliance-report.py` | Maps findings to regulatory frameworks (SOC2, NIST, etc.) |
 | `integrations/mcp-server/` | Model Context Protocol (MCP) server for AI assistants |
