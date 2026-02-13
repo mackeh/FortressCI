@@ -58,6 +58,12 @@ The wizard generates:
 - `.security/` configurations (policy, waivers, compliance mappings, falco rules)
 - `.fortressci.yml` (severity thresholds and scanner config)
 
+Validate your setup:
+
+```bash
+./scripts/fortressci-doctor.sh --workspace .
+```
+
 ### Option 2: Docker Local Scan
 
 Run all security scans locally in a single container:
@@ -97,6 +103,26 @@ Define organisational security policies in `.security/policy.yml`. Policies are 
 ```bash
 # Run policy enforcement
 ./scripts/fortressci-policy-check.sh .security/policy.yml results/
+```
+
+---
+
+## Setup Health Check
+
+Use `fortressci doctor` to validate local readiness before enforcing policy gates in CI.
+
+```bash
+# Local health check (files, hooks, tools, secrets)
+./scripts/fortressci-doctor.sh --workspace .
+
+# Optional: include GitHub branch protection probe
+./scripts/fortressci-doctor.sh --workspace . --check-remote
+```
+
+Use `--strict` to treat warnings as a failure:
+
+```bash
+./scripts/fortressci-doctor.sh --workspace . --strict
 ```
 
 ---
@@ -168,6 +194,7 @@ Output: `./org-results/cross-repo-analysis.json`
 │   └── mcp-server/                # Model Context Protocol server
 ├── scripts/
 │   ├── fortressci-init.sh         # Setup wizard CLI
+│   ├── fortressci-doctor.sh       # Health checks for local/CI readiness
 │   ├── run-all.sh                 # Docker scan orchestrator
 │   ├── ai-triage.py               # AI findings analysis
 │   ├── auto-fix.sh                # Automated remediation

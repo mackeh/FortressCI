@@ -23,7 +23,8 @@ We love new ideas! If you have a suggestion for an improvement, please open an i
 3.  If you've changed APIs, update the documentation.
 4.  Ensure the test suite passes.
 5.  Make sure your code follows the existing style and conventions.
-6.  Open a pull request with a clear description of your changes.
+6.  Run local readiness checks: `./scripts/fortressci-doctor.sh --workspace . --strict`
+7.  Open a pull request with a clear description of your changes.
 
 ## Development Setup
 1.  Clone your fork: `git clone https://github.com/your-username/FortressCI.git`

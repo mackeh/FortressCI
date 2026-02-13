@@ -37,6 +37,7 @@
 - Cross-repo dependency analysis via `scripts/cross-repo-analyzer.py`
 - Shared dependency hotspot prioritisation (`top_shared_risk_hotspots`)
 - Optional Snyk correlation from per-repo `sca.json` to identify vulnerable shared packages
+- Delivered `scripts/fortressci-doctor.sh` for readiness checks (tooling, config, hooks, and optional governance probe)
 
 ---
 
@@ -49,7 +50,7 @@
 - **`fortressci init` CLI tool**: Interactive setup script that detects your project type (Node, Python, Go, Java, etc.), CI platform, and IaC tooling — generates a tailored `devsecops.yml`, `.pre-commit-config.yaml`, and `.security/` directory in one command
 - **Multi-CI platform support**: Workflow templates for GitLab CI, Bitbucket Pipelines, Azure Pipelines, CircleCI, and Jenkins — not just GitHub Actions
 - **Docker-based local runner**: `docker run fortressci/scan .` — run the full pipeline locally in a container without installing any tools individually
-- **`fortressci doctor`**: Health check command that verifies all tools are installed, secrets are configured, hooks are active, and branch protection is set correctly
+- **`fortressci doctor` advanced checks**: Extend health checks with richer org-level controls (policy drift, secret-source coverage, mandatory scanner profiles)
 
 #### Developer Experience
 

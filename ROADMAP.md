@@ -81,6 +81,18 @@
 
 ---
 
+### 1.1.8 — `fortressci doctor` Health Checks [COMPLETED ✅]
+
+**Goal:** Fast environment and governance readiness checks before CI enforcement.
+
+**Achievements:**
+- Implemented `scripts/fortressci-doctor.sh` for local readiness validation.
+- Added checks for config presence, hooks, required tooling, and CI file detection.
+- Added optional GitHub branch protection probe (`--check-remote`) for governance posture.
+- Integrated doctor guidance into init flow and project documentation.
+
+---
+
 ## v1.2.x: Advanced Security
 
 ### 1.2.1 — Runtime Security (Falco) [COMPLETED ✅]
@@ -272,6 +284,7 @@
 ```
 1.1.1 (Init wizard) ──→ 1.1.2 (Templates used by wizard)
                     ──→ 1.1.6 (Thresholds configured in init)
+                    ──→ 1.1.8 (Doctor validates generated setup)
 
 1.1.3 (Docker runner) ──→ 2.0.7 (Playground reuses runner image)
 1.1.4 (Unified report) ──→ 2.0.1 (Dashboard extends report data)
