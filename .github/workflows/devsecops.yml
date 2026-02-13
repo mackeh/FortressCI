@@ -175,7 +175,7 @@ jobs:
         with:
           name: snyk.sarif
           path: snyk.sarif
-      
+
       - name: Upload Security SARIF (CodeQL)
         uses: github/codeql-action/upload-sarif@b611370bb5703a7efb587f9d136a52ea24c5c38c # v3.25.11
         if: always() && env.SNYK_TOKEN != ''
@@ -226,7 +226,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write 
+      pull-requests: write
     env:
       INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
     steps:
@@ -243,7 +243,7 @@ jobs:
         if: env.INFRACOST_API_KEY != ''
         run: |
           infracost breakdown --path ./terraform --format json --out-file infracost-usage.json
-          
+
       - name: Post Infracost Comment
         if: github.event_name == 'pull_request' && env.INFRACOST_API_KEY != ''
         env:
@@ -300,7 +300,7 @@ jobs:
 
       # 2. Sign (Cosign) - mock step for demo
       - name: Sign Image
-        if: github.event_name != 'pull_request' 
+        if: github.event_name != 'pull_request'
         env:
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
@@ -337,7 +337,7 @@ jobs:
         run: |
           docker build -t my-app:${{ github.sha }} .
           docker run -d -p 3000:3000 --name test-app my-app:${{ github.sha }}
-          sleep 5 
+          sleep 5
 
       - name: OWASP ZAP Baseline Scan
         continue-on-error: true
@@ -502,7 +502,7 @@ jobs:
           title: "🏰 FortressCI Auto-Remediation"
           body: |
             This is an automated pull request from FortressCI to fix security findings.
-            
+
             Scanners: Snyk, Checkov
           branch: fortressci/auto-remediation
           base: main
