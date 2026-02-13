@@ -233,7 +233,7 @@
 - Managed scanning infrastructure
 - **Effort:** 3–6 months
 
-### Cross-Repo Dependency Graph [IN PROGRESS 🏗️]
+### Cross-Repo Dependency Graph [COMPLETED ✅]
 
 **Goal:** Visualise how vulnerabilities propagate across shared libraries.
 
@@ -241,6 +241,8 @@
 - Implemented `scripts/cross-repo-analyzer.py` to aggregate SBOM data across multiple projects.
 - Enabled identification of shared dependencies and their usage across the organisation.
 - Automated generation of cross-repo dependency reports in JSON format.
+- Added optional Snyk correlation from sibling `sca.json` files to highlight shared vulnerable dependencies.
+- Added prioritized `top_shared_risk_hotspots` output to support CISO-level remediation planning.
 
 ### Zero-Trust CI Pipeline
 - Every step runs in isolated, attested environment

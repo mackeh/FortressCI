@@ -33,6 +33,11 @@
 - Branch protection recommendations and operational guidance
 - `scripts/generate_keys.sh` for Cosign key generation
 
+### ✅ v2.1.x — Ecosystem Insights (Delivered)
+- Cross-repo dependency analysis via `scripts/cross-repo-analyzer.py`
+- Shared dependency hotspot prioritisation (`top_shared_risk_hotspots`)
+- Optional Snyk correlation from per-repo `sca.json` to identify vulnerable shared packages
+
 ---
 
 ## Upcoming Phases
@@ -124,7 +129,7 @@
 
 - **FortressCI Cloud**: Hosted SaaS with org management, centralised dashboards, SSO, and managed scan infrastructure — no self-hosting required
 - **Runtime protection agent**: Lightweight sidecar that enforces security policies at runtime (network egress, file access, process execution) based on CI-time analysis — extends "shift left" to "shift everywhere"
-- **Cross-repo dependency graph**: Visualise how vulnerabilities in shared libraries propagate across all repos in an organisation — *"Upgrading `lodash` in `shared-utils` fixes findings in 14 downstream repos"*
+- **Cross-repo dependency graph UI and service layer**: Extend current JSON analyzer into an interactive org-wide graph experience — *"Upgrading `lodash` in `shared-utils` fixes findings in 14 downstream repos"*
 - **Security debt tracking**: Treat security findings like tech debt — estimate remediation cost, track velocity, forecast when the backlog will be clear at current fix rate
 - **Regulatory auto-mapping**: Automatically map findings and controls to evolving regulatory frameworks as they change (new NIST revisions, EU CRA updates, PCI DSS v4)
 - **Zero-trust CI pipeline**: Every step in the pipeline runs in an isolated, attested environment with minimal permissions — no shared runners, no persistent state, cryptographic verification at every handoff

@@ -3,6 +3,7 @@
 FortressCI is a secure-by-default DevSecOps platform blueprint designed to implement "Shift Left" security, automated pipelines, and infrastructure protection. It integrates best-in-class open-source security tools to ensure your code and infrastructure are secure from day one.
 
 > **[View our Roadmap](ROADMAP.md)** for upcoming features and long-term vision.
+> **[Read the Changelog](CHANGELOG.md)** for release-by-release updates.
 > **[Try the Interactive Playground](playground/index.html)** to see FortressCI in action.
 
 ## Features
@@ -33,6 +34,7 @@ Automated checks on every push and pull request across **6 CI platforms**.
 
 - **AI Triage**: Automated findings analysis and prioritisation via LLMs.
 - **Auto-Remediation**: Self-healing pipelines that open PRs to fix vulnerabilities.
+- **Cross-Repo Analyzer**: Shared dependency and vulnerability hotspot analysis across many repositories.
 - **Security Dashboard**: Real-time visualisations of security posture and trends.
 - **MCP Server**: Native integration for AI assistants to query security data.
 
@@ -132,6 +134,21 @@ python3 scripts/ai-triage.py --results-dir results/ --config .fortressci.yml
 
 ---
 
+## Cross-Repo Dependency Risk Analysis
+
+Use SBOM and SCA outputs from multiple repositories to find shared dependency
+hotspots that are likely to create systemic risk.
+
+```bash
+# Analyze all subdirectories under ./org-results that contain sbom-source.cdx.json
+# If sibling sca.json files exist, known vulnerable dependencies are correlated too.
+python3 scripts/cross-repo-analyzer.py --dir ./org-results --top 25
+```
+
+Output: `./org-results/cross-repo-analysis.json`
+
+---
+
 ## Repository Structure
 
 ```
@@ -154,6 +171,7 @@ python3 scripts/ai-triage.py --results-dir results/ --config .fortressci.yml
 │   ├── run-all.sh                 # Docker scan orchestrator
 │   ├── ai-triage.py               # AI findings analysis
 │   ├── auto-fix.sh                # Automated remediation
+│   ├── cross-repo-analyzer.py     # Shared dependency risk analysis
 │   ├── generate-badge.py          # Security scoring & badges
 │   ├── generate-sbom.sh           # SBOM generator
 │   ├── fortressci-policy-check.sh # Policy enforcement
