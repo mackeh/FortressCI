@@ -6,6 +6,8 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2.1.6] - 2026-02-13
+
 ### Added
 - Added `scripts/fortressci-doctor.sh` for health checks across config files, hooks, tools, secrets, and CI setup.
 - Added initial script test suites:
