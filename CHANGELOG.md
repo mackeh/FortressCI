@@ -13,6 +13,7 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 - Added doctor guidance to `scripts/fortressci-init.sh` output.
 - Included doctor utility in the Docker image as `fortressci-doctor`.
 - Updated README and roadmap documentation for doctor workflow and status.
+- Added a non-blocking `doctor-check` job in `.github/workflows/devsecops.yml` that uploads `fortressci-doctor.log`.
 
 ## [2.1.5] - 2026-02-13
 
