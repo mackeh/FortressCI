@@ -24,12 +24,14 @@ We love new ideas! If you have a suggestion for an improvement, please open an i
 4.  Ensure the test suite passes.
 5.  Make sure your code follows the existing style and conventions.
 6.  Run local readiness checks: `./scripts/fortressci-doctor.sh --workspace . --strict`
-7.  Open a pull request with a clear description of your changes.
+7.  Run script tests: `pytest -q tests/python` and `bats tests/bash`
+8.  Open a pull request with a clear description of your changes.
 
 ## Development Setup
 1.  Clone your fork: `git clone https://github.com/your-username/FortressCI.git`
 2.  Install pre-commit hooks: `pre-commit install`
-3.  Follow the instructions in `README.md` for local scanning and testing.
+3.  Install script test tools: `python3 -m pip install -U pytest` and `sudo apt-get install -y bats`
+4.  Follow the instructions in `README.md` for local scanning and testing.
 
 ## Community Standards
 Please adhere to our [Code of Conduct](CODE_OF_CONDUCT.md) in all your interactions with the project.

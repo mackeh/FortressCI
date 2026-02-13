@@ -38,6 +38,7 @@
 - Shared dependency hotspot prioritisation (`top_shared_risk_hotspots`)
 - Optional Snyk correlation from per-repo `sca.json` to identify vulnerable shared packages
 - Delivered `scripts/fortressci-doctor.sh` for readiness checks (tooling, config, hooks, and optional governance probe)
+- Delivered script quality/test foundation: `quality-lint` CI job and `pytest` + `bats` suites under `tests/`
 
 ---
 

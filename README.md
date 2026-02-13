@@ -83,6 +83,30 @@ This runs the full suite including AI triage, SBOM generation, and threshold gat
 
 ---
 
+## Quality And Tests
+
+Run local quality checks before opening a PR:
+
+```bash
+pre-commit run --all-files
+bash -n scripts/*.sh
+python3 -m compileall scripts
+```
+
+Run the script test suites:
+
+```bash
+python3 -m pip install -U pytest
+pytest -q tests/python
+bats tests/bash
+```
+
+CI now runs:
+- `quality-lint`: actionlint + shellcheck + yamllint
+- `script-tests`: pytest + bats
+
+---
+
 ## Security Scoring
 
 FortressCI calculates a real-time security grade (A+ to F) based on findings and practices.
@@ -204,6 +228,9 @@ Output: `./org-results/cross-repo-analysis.json`
 │   ├── fortressci-policy-check.sh # Policy enforcement
 │   ├── generate-report.py         # HTML report generator
 │   └── check-pinning.sh           # Supply chain pinning checker
+├── tests/
+│   ├── python/                    # Pytest suite for Python scripts
+│   └── bash/                      # Bats suite for shell scripts
 ├── templates/                     # CI/CD and config templates
 ├── .fortressci.yml                # Global project configuration
 └── Dockerfile                     # All-in-one scanner image

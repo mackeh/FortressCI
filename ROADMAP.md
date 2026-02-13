@@ -93,6 +93,17 @@
 
 ---
 
+### 1.1.9 — Script Quality Gates & Test Harness [COMPLETED ✅]
+
+**Goal:** Prevent regressions in automation and CI policy logic.
+
+**Achievements:**
+- Added CI lint gates for workflow, shell, and YAML validation (`actionlint`, `shellcheck`, `yamllint`).
+- Added script test suites with `pytest` and `bats` under `tests/python/` and `tests/bash/`.
+- Added baseline YAML lint configuration in `.yamllint.yml`.
+
+---
+
 ## v1.2.x: Advanced Security
 
 ### 1.2.1 — Runtime Security (Falco) [COMPLETED ✅]
@@ -285,6 +296,7 @@
 1.1.1 (Init wizard) ──→ 1.1.2 (Templates used by wizard)
                     ──→ 1.1.6 (Thresholds configured in init)
                     ──→ 1.1.8 (Doctor validates generated setup)
+                    ──→ 1.1.9 (Quality gates prevent script regressions)
 
 1.1.3 (Docker runner) ──→ 2.0.7 (Playground reuses runner image)
 1.1.4 (Unified report) ──→ 2.0.1 (Dashboard extends report data)

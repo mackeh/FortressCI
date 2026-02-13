@@ -1,0 +1,12 @@
+extends: default
+
+ignore: |
+  results/
+  results-*/
+  .claude/
+
+rules:
+  line-length: disable
+  truthy: disable
+  comments-indentation: disable
+  document-start: disable
