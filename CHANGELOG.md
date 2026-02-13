@@ -6,6 +6,9 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+### Fixed
+- Updated `.github/workflows/devsecops.yml` run blocks to satisfy actionlint ShellCheck checks (quoted expansions and consolidated audit JSON generation).
+
 ## [2.1.6] - 2026-02-13
 
 ### Added

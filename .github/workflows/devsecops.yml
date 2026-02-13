@@ -120,7 +120,7 @@ jobs:
 
       - name: Semgrep Scan
         run: |
-          docker run --rm -v $(pwd):/src semgrep/semgrep semgrep scan --config auto --sarif --output /src/semgrep.sarif
+          docker run --rm -v "$(pwd):/src" semgrep/semgrep semgrep scan --config auto --sarif --output /src/semgrep.sarif
         continue-on-error: true
 
       - name: Upload SARIF
@@ -249,7 +249,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-            infracost comment github --path infracost-usage.json --repo $GITHUB_REPOSITORY --pull-request ${{ github.event.pull_request.number }} --behavior update
+            infracost comment github --path infracost-usage.json --repo "$GITHUB_REPOSITORY" --pull-request "${{ github.event.pull_request.number }}" --behavior update
 
       - name: Skip Infracost (No API Key)
         if: env.INFRACOST_API_KEY == ''
@@ -394,13 +394,15 @@ jobs:
 
       - name: Generate Audit Record
         run: |
-          echo "{" > results/deployment-audit.json
-          echo "  \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"," >> results/deployment-audit.json
-          echo "  \"repository\": \"$GITHUB_REPOSITORY\"," >> results/deployment-audit.json
-          echo "  \"commit_sha\": \"$GITHUB_SHA\"," >> results/deployment-audit.json
-          echo "  \"actor\": \"$GITHUB_ACTOR\"," >> results/deployment-audit.json
-          echo "  \"workflow_run_id\": \"$GITHUB_RUN_ID\"," >> results/deployment-audit.json
-          echo "}" >> results/deployment-audit.json
+          cat > results/deployment-audit.json <<EOF
+          {
+            "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+            "repository": "$GITHUB_REPOSITORY",
+            "commit_sha": "$GITHUB_SHA",
+            "actor": "$GITHUB_ACTOR",
+            "workflow_run_id": "$GITHUB_RUN_ID"
+          }
+          EOF
 
       - name: Upload Audit Artifact
         uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
