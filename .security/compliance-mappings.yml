@@ -5,24 +5,24 @@ mappings:
   - tool: semgrep
     rule_prefix: "python.flask.security"
     frameworks:
-      - { framework: "SOC2", control: "CC6.1" }
-      - { framework: "NIST-800-53", control: "SI-10" }
-      - { framework: "OWASP", category: "A03:2021-Injection" }
+      - {framework: "SOC2", control: "CC6.1"}
+      - {framework: "NIST-800-53", control: "SI-10"}
+      - {framework: "OWASP", category: "A03:2021-Injection"}
 
   - tool: trivy
     category: "os-vulnerability"
     frameworks:
-      - { framework: "SOC2", control: "CC7.1" }
-      - { framework: "CIS", benchmark: "4.4" }
+      - {framework: "SOC2", control: "CC7.1"}
+      - {framework: "CIS", benchmark: "4.4"}
 
   - tool: checkov
     category: "iac-misconfiguration"
     frameworks:
-      - { framework: "NIST-800-53", control: "AC-4" }
-      - { framework: "SOC2", control: "CC6.6" }
+      - {framework: "NIST-800-53", control: "AC-4"}
+      - {framework: "SOC2", control: "CC6.6"}
 
   - tool: policy-check
     policy_id: "FCI-POL-001"
     frameworks:
-      - { framework: "SLSA", level: "3" }
-      - { framework: "NIST-800-53", control: "CM-2" }
+      - {framework: "SLSA", level: "3"}
+      - {framework: "NIST-800-53", control: "CM-2"}
