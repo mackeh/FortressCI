@@ -6,6 +6,22 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-02-16
+
+### Added
+- Added `scripts/generate-adoption-roadmap.py` to generate prioritized 30/60/90-day DevSecOps plans with maturity and feasibility scoring.
+- Added roadmap outputs in scan flow: `results/adoption-roadmap.json` and `results/adoption-roadmap.md`.
+- Added MCP tool `get_devsecops_adoption_roadmap` for assistant access to roadmap data.
+- Added dedicated Bicep SARIF handling (`bicep.sarif`) in local scan orchestration and reporting pipelines.
+- Added Bicep summary regression test: `tests/python/test_summarize_bicep.py`.
+- Added roadmap generator tests: `tests/python/test_generate_adoption_roadmap.py`.
+- Added an end-to-end Azure DevOps template flow in `templates/azure/azure-pipelines.yml` (build, scan, gate, publish artifacts, roadmap highlights).
+
+### Changed
+- Updated GitHub IaC scan scope from `./terraform` to repository root (`.`) to include Bicep and non-Terraform IaC paths.
+- Updated setup wizard detection to identify Bicep repositories.
+- Updated README and roadmap documentation to reflect roadmap intelligence, Azure integration, and Bicep coverage.
+
 ### Fixed
 - Updated `.github/workflows/devsecops.yml` run blocks to satisfy actionlint ShellCheck checks (quoted expansions and consolidated audit JSON generation).
 

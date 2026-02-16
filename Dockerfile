@@ -40,10 +40,11 @@ COPY scripts/auto-fix.sh /usr/local/bin/auto-fix
 COPY scripts/build-attack-graph.py /usr/local/bin/build-attack-graph
 COPY scripts/cross-repo-analyzer.py /usr/local/bin/cross-repo-analyzer
 COPY scripts/fortressci-doctor.sh /usr/local/bin/fortressci-doctor
+COPY scripts/generate-adoption-roadmap.py /usr/local/bin/generate-adoption-roadmap
 COPY templates/ /templates/
 
 # Set permissions
-RUN chmod +x /usr/local/bin/fortressci-scan /usr/local/bin/check-thresholds.sh /usr/local/bin/fortressci-waiver /usr/local/bin/generate-sbom /usr/local/bin/fortressci-policy-check /usr/local/bin/generate-compliance-report /usr/local/bin/ai-triage /usr/local/bin/generate-badge /usr/local/bin/auto-fix /usr/local/bin/build-attack-graph /usr/local/bin/cross-repo-analyzer /usr/local/bin/fortressci-doctor
+RUN chmod +x /usr/local/bin/fortressci-scan /usr/local/bin/check-thresholds.sh /usr/local/bin/fortressci-waiver /usr/local/bin/generate-sbom /usr/local/bin/fortressci-policy-check /usr/local/bin/generate-compliance-report /usr/local/bin/ai-triage /usr/local/bin/generate-badge /usr/local/bin/auto-fix /usr/local/bin/build-attack-graph /usr/local/bin/cross-repo-analyzer /usr/local/bin/fortressci-doctor /usr/local/bin/generate-adoption-roadmap
 
 # Create results directory
 RUN mkdir -p /results

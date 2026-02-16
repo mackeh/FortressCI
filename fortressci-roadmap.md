@@ -1,6 +1,6 @@
 # FortressCI Roadmap
 
-> Last updated: February 2026
+> Last updated: February 16, 2026
 
 ---
 
@@ -11,7 +11,7 @@
 #### Phase 1: Shift Left (Local Development)
 - Pre-commit hooks via `.pre-commit-config.yaml`
 - TruffleHog secrets detection (blocks commits with hardcoded credentials)
-- Checkov IaC scanning locally (Terraform, CloudFormation)
+- Checkov IaC scanning locally (Terraform, CloudFormation, Bicep)
 - Standard code quality hooks (trailing whitespace, file integrity)
 
 #### Phase 2: Automated Pipeline (CI/CD)
@@ -39,6 +39,13 @@
 - Optional Snyk correlation from per-repo `sca.json` to identify vulnerable shared packages
 - Delivered `scripts/fortressci-doctor.sh` for readiness checks (tooling, config, hooks, and optional governance probe)
 - Delivered script quality/test foundation: `quality-lint` CI job and `pytest` + `bats` suites under `tests/`
+
+### ✅ v2.2.x — Adoption Intelligence & Bicep Expansion (Delivered)
+- Delivered DevSecOps roadmap engine (`scripts/generate-adoption-roadmap.py`) with maturity and feasibility scores.
+- Added roadmap artifacts in scan output: `adoption-roadmap.json` and `adoption-roadmap.md`.
+- Added roadmap retrieval in MCP integration (`get_devsecops_adoption_roadmap`).
+- Added first-class Bicep SARIF handling and aggregation (`bicep.sarif`) in scan summary and reporting.
+- Upgraded Azure DevOps template to build, scan, gate, and publish complete FortressCI artifacts.
 
 ---
 

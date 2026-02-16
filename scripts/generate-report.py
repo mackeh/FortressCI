@@ -114,6 +114,9 @@ def main():
         all_findings.extend(parse_sarif(results_dir / "checkov.sarif", "Checkov"))
     elif (results_dir / "results_sarif.sarif").exists():
         all_findings.extend(parse_sarif(results_dir / "results_sarif.sarif", "Checkov"))
+
+    if (results_dir / "bicep.sarif").exists():
+        all_findings.extend(parse_sarif(results_dir / "bicep.sarif", "Bicep (Checkov)"))
         
     all_findings.extend(parse_sarif(results_dir / "container.sarif", "Trivy"))
 
