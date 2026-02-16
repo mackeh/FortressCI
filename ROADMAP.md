@@ -23,7 +23,7 @@
 
 **Achievements:**
 - Implemented `scripts/fortressci-init.sh` setup wizard.
-- Automated detection of project types (Node, Python, Go, Java).
+- Automated detection of project types (Node, Python, Go, Java, Bicep).
 - Generated tailored CI/CD workflows and security configurations.
 
 ### 1.1.2 — Multi-CI Platform Templates [COMPLETED ✅]
@@ -167,6 +167,16 @@
 - Implemented `scripts/generate-compliance-report.py` to automate mapping.
 - Integrated compliance reporting into both local scans and CI/CD pipelines.
 
+### 1.2.7 — Bicep IaC Support [COMPLETED ✅]
+
+**Goal:** Add first-class IaC scanning support for Azure Bicep.
+
+**Achievements:**
+- Added Bicep detection and dedicated Bicep SARIF output in scan orchestration.
+- Included Bicep findings in summary aggregation and HTML reporting.
+- Extended CI summary handling to include `bicep.sarif`.
+- Added regression tests to preserve Bicep summary behavior.
+
 ---
 
 ## v2.0.x: Woo Factor & Platform
@@ -233,6 +243,7 @@
 **Achievements:**
 - Implemented a FastMCP-based server in `integrations/mcp-server/`.
 - Provided tools for AI assistants to query scan summaries, compliance status, and waivers.
+- Added roadmap retrieval for AI assistants (`get_devsecops_adoption_roadmap`).
 - Enabled seamless integration between FortressCI data and AI-powered development workflows.
 
 ---
@@ -245,6 +256,27 @@
 - Implemented `playground/index.html` as an interactive code-to-findings simulator.
 - Provided pre-loaded samples for Docker, Terraform, and Python.
 - Demonstrated real-time vulnerability detection directly in the browser.
+
+---
+
+### 2.0.8 — DevSecOps Adoption Roadmap Engine [COMPLETED ✅]
+
+**Goal:** Turn findings into execution plans that teams can adopt quickly.
+
+**Achievements:**
+- Implemented `scripts/generate-adoption-roadmap.py`.
+- Added maturity and feasibility scoring dimensions.
+- Generated prioritized actions and 30/60/90-day roadmap artifacts.
+- Integrated roadmap generation into local scan flow and Docker image.
+
+### 2.0.9 — Azure DevOps End-to-End Integration [COMPLETED ✅]
+
+**Goal:** Provide production-ready Azure DevOps execution with artifacted roadmap output.
+
+**Achievements:**
+- Rebuilt Azure pipeline template to run FortressCI end-to-end in one job.
+- Added pre-scan secret validation with actionable error messaging.
+- Published full `results/` artifacts including roadmap files.
 
 ---
 

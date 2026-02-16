@@ -5,6 +5,7 @@ module.exports = async ({ github, context }) => {
     "semgrep.sarif",
     "trivy-results.sarif",
     "checkov.sarif",
+    "bicep.sarif",
     "snyk.sarif",
   ];
   let checkRows = [];

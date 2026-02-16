@@ -59,5 +59,18 @@ async def get_ai_triage_explanations() -> str:
     with open(triage_path, "r") as f:
         return f.read()
 
+
+@mcp.tool()
+async def get_devsecops_adoption_roadmap() -> str:
+    """Get the latest prioritized DevSecOps adoption roadmap and feasibility scoring."""
+    roadmap_path = os.path.join(RESULTS_DIR, "adoption-roadmap.json")
+    if not os.path.exists(roadmap_path):
+        return "No adoption roadmap found."
+
+    with open(roadmap_path, "r") as f:
+        roadmap = json.load(f)
+
+    return json.dumps(roadmap, indent=2)
+
 if __name__ == "__main__":
     mcp.run()

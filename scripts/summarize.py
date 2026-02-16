@@ -87,6 +87,12 @@ def main():
     else:
         tools["checkov"] = empty_severity()
 
+    # Dedicated Bicep scan artifact (when available)
+    if (results_dir / "bicep.sarif").exists():
+        tools["bicep"] = summarize_sarif(results_dir / "bicep.sarif")
+    else:
+        tools["bicep"] = empty_severity()
+
     tools["trivy"] = summarize_sarif(results_dir / "container.sarif")
 
     # Aggregate totals across all tools

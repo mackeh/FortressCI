@@ -1,68 +1,92 @@
 trigger:
 - main
 
+pr:
+- main
+
 pool:
   vmImage: ubuntu-latest
+
+variables:
+  fortressciImage: "fortressci/scan:azure"
+  resultsDir: "$(System.DefaultWorkingDirectory)/results"
 
 stages:
 - stage: SecurityScan
   displayName: "FortressCI Security"
   jobs:
-  - job: SecretScan
-    displayName: "Secret Scan (TruffleHog)"
+  - job: FortressCI
+    displayName: "Run FortressCI End-to-End"
     steps:
-    - script: |
-        docker run --rm -v $(pwd):/workdir trufflesecurity/trufflehog:latest git file:///workdir --since-commit HEAD~1 --fail
-      displayName: "Run TruffleHog"
+    - checkout: self
+      persistCredentials: true
 
-  - job: SAST
-    displayName: "SAST (Semgrep)"
-    steps:
     - script: |
-        docker run --rm -v $(pwd):/src returntocorp/semgrep semgrep --config auto --sarif -o /src/semgrep.sarif /src
-      displayName: "Run Semgrep"
-    - task: PublishBuildArtifacts@1
-      inputs:
-        PathtoPublish: 'semgrep.sarif'
-        ArtifactName: 'semgrep-report'
+        set -euo pipefail
+        mkdir -p "$(resultsDir)"
+      displayName: "Prepare Results Directory"
 
-  - job: SCA
-    displayName: "SCA (Snyk)"
-    steps:
     - script: |
-        npm install -g snyk
-        snyk test --json > snyk.json
-      displayName: "Run Snyk"
+        set -euo pipefail
+        if [ -z "${SNYK_TOKEN:-}" ]; then
+          echo "ERROR: Missing required secret 'SNYK_TOKEN'."
+          echo "Azure DevOps: Pipelines > Edit pipeline > Variables > add SNYK_TOKEN and mark it secret."
+          exit 1
+        fi
+
+        if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+          echo "WARNING: ANTHROPIC_API_KEY is not set. AI triage will be skipped."
+        fi
+      displayName: "Validate Required Secrets"
       env:
         SNYK_TOKEN: $(SNYK_TOKEN)
-    - task: PublishBuildArtifacts@1
-      inputs:
-        PathtoPublish: 'snyk.json'
-        ArtifactName: 'snyk-report'
+        ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
 
-  - job: IaC
-    displayName: "IaC Scan (Checkov)"
-    steps:
     - script: |
-        docker run --rm -v $(pwd):/tf bridgecrew/checkov:latest -d /tf --output-file-path /tf/checkov.sarif --output sarif
-      displayName: "Run Checkov"
-    - task: PublishBuildArtifacts@1
-      inputs:
-        PathtoPublish: 'checkov.sarif'
-        ArtifactName: 'checkov-report'
+        set -euo pipefail
+        docker build -t "$(fortressciImage)" .
+      displayName: "Build FortressCI Scanner Image"
 
-  - job: SBOM
-    displayName: "SBOM Generation (Syft)"
-    steps:
     - script: |
-        docker run --rm -v $(pwd):/work anchore/syft:latest /work -o spdx-json=/work/sbom-source.spdx.json
-        docker run --rm -v $(pwd):/work anchore/syft:latest /work -o cyclonedx-json=/work/sbom-source.cdx.json
-      displayName: "Run Syft"
+        set -euo pipefail
+        docker run --rm \
+          -e SNYK_TOKEN="$(SNYK_TOKEN)" \
+          -e ANTHROPIC_API_KEY="$(ANTHROPIC_API_KEY)" \
+          -v "$(System.DefaultWorkingDirectory):/workspace" \
+          -v "$(resultsDir):/results" \
+          "$(fortressciImage)" /workspace
+      displayName: "Run FortressCI Scan + Policy Gates + Roadmap"
+
+    - script: |
+        set -euo pipefail
+        export RESULTS_DIR="$(resultsDir)"
+        if [ -f "${RESULTS_DIR}/adoption-roadmap.json" ]; then
+          python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+
+roadmap_path = Path(os.environ["RESULTS_DIR"]) / "adoption-roadmap.json"
+roadmap = json.loads(roadmap_path.read_text(encoding="utf-8"))
+scores = roadmap.get("scores", {})
+actions = roadmap.get("recommended_actions", [])[:3]
+
+print("DevSecOps maturity:", scores.get("devsecops_maturity"))
+print("Adoption feasibility:", scores.get("adoption_feasibility"))
+print("Top actions:")
+for action in actions:
+    print(f"- {action.get('title')} (priority {action.get('priority')})")
+PY
+        else
+          echo "No adoption roadmap generated."
+        fi
+      displayName: "Print Adoption Roadmap Highlights"
+      condition: succeededOrFailed()
+
     - task: PublishBuildArtifacts@1
+      displayName: "Publish Full FortressCI Results"
+      condition: succeededOrFailed()
       inputs:
-        PathtoPublish: 'sbom-source.spdx.json'
-        ArtifactName: 'sbom-spdx'
-    - task: PublishBuildArtifacts@1
-      inputs:
-        PathtoPublish: 'sbom-source.cdx.json'
-        ArtifactName: 'sbom-cdx'
+        PathtoPublish: "$(resultsDir)"
+        ArtifactName: "fortressci-results"
+        publishLocation: "Container"

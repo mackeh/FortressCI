@@ -22,7 +22,26 @@ else
 fi
 
 echo "🏗️ [4/6] IaC (Checkov)..."
-checkov -d $WORKSPACE --output-file-path $RESULTS_DIR --output sarif || true
+has_bicep=0
+if find "$WORKSPACE" -type f -name "*.bicep" \
+    -not -path "*/.terraform/*" \
+    -not -path "*/node_modules/*" | grep -q "."; then
+    has_bicep=1
+fi
+
+if [ "$has_bicep" -eq 1 ]; then
+    echo "Detected Bicep files."
+    if checkov --help 2>/dev/null | grep -q -- "--skip-framework"; then
+        # Exclude Bicep from baseline IaC scan and run a dedicated Bicep pass.
+        checkov -d "$WORKSPACE" --skip-framework bicep --output-file-path "$RESULTS_DIR" --output sarif || true
+        checkov -d "$WORKSPACE" --framework bicep --quiet --compact --output sarif > "$RESULTS_DIR/bicep.sarif" || true
+    else
+        echo "⚠️ checkov --skip-framework unavailable; running unified IaC scan."
+        checkov -d "$WORKSPACE" --output-file-path "$RESULTS_DIR" --output sarif || true
+    fi
+else
+    checkov -d "$WORKSPACE" --output-file-path "$RESULTS_DIR" --output sarif || true
+fi
 
 echo "🐳 [5/6] Container scan (Trivy)..."
 if [ -f "$WORKSPACE/Dockerfile" ]; then
@@ -115,4 +134,13 @@ if [ -f "/usr/local/bin/build-attack-graph" ]; then
 elif [ -f "scripts/build-attack-graph.py" ]; then
     echo ""
     python3 scripts/build-attack-graph.py "$RESULTS_DIR"
+fi
+
+# Generate DevSecOps Adoption Roadmap
+if [ -f "/usr/local/bin/generate-adoption-roadmap" ]; then
+    echo ""
+    /usr/local/bin/generate-adoption-roadmap --results-dir "$RESULTS_DIR" --workspace "$WORKSPACE" --config "$WORKSPACE/.fortressci.yml"
+elif [ -f "scripts/generate-adoption-roadmap.py" ]; then
+    echo ""
+    python3 scripts/generate-adoption-roadmap.py --results-dir "$RESULTS_DIR" --workspace "$WORKSPACE" --config "$WORKSPACE/.fortressci.yml"
 fi

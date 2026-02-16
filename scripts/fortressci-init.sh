@@ -22,6 +22,7 @@ if [ -f "package.json" ]; then echo "✓ Detected: Node.js"; LANG="node"; fi
 if [ -f "requirements.txt" ] || [ -f "pyproject.toml" ]; then echo "✓ Detected: Python"; LANG="python"; fi
 if [ -f "go.mod" ]; then echo "✓ Detected: Go"; LANG="go"; fi
 if [ -f "pom.xml" ] || [ -f "build.gradle" ]; then echo "✓ Detected: Java"; LANG="java"; fi
+if find . -maxdepth 5 -type f -name "*.bicep" | grep -q "."; then echo "✓ Detected: Bicep"; LANG="bicep"; fi
 
 # Detect CI platform
 # Detect CI platform

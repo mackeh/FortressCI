@@ -124,7 +124,7 @@ jobs:
       - name: Checkov Scan
         uses: bridgecrewio/checkov-action@master
         with:
-          directory: ./terraform
+          directory: .
           quiet: true
           soft_fail: false 
           output_format: sarif

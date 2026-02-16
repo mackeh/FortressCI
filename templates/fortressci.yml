@@ -36,6 +36,7 @@ scanners:
   iac:
     enabled: true
     tool: checkov
+    # Scans Terraform, CloudFormation, Kubernetes, and Bicep
 
   container:
     enabled: true
@@ -44,3 +45,8 @@ scanners:
   dast:
     enabled: false
     tool: zap
+
+adoption:
+  enabled: true
+  planning_horizon_days: 90
+  target_maturity_score: 85

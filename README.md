@@ -14,7 +14,7 @@ Catch issues before they are committed.
 
 - **Secrets Detection**: [TruffleHog](https://github.com/trufflesecurity/trufflehog) scans for hardcoded credentials.
 - **Code Quality**: Standard hooks for trailing whitespace and file integrity.
-- **IaC Scanning**: [Checkov](https://www.checkov.io/) runs locally to catch Terraform/CloudFormation issues.
+- **IaC Scanning**: [Checkov](https://www.checkov.io/) runs locally to catch Terraform/CloudFormation/Bicep issues.
 
 ### Phase 2: Automated Pipeline (CI/CD)
 
@@ -23,7 +23,7 @@ Automated checks on every push and pull request across **6 CI platforms**.
 - **Secret Scanning**: TruffleHog deep scan on git history.
 - **SAST**: [Semgrep](https://semgrep.dev/) scans source code for vulnerabilities (OWASP Top 10).
 - **SCA**: [Snyk](https://snyk.io/) checks dependencies for known CVEs.
-- **IaC Scanning**: Checkov scans Terraform, CloudFormation, and Kubernetes manifests.
+- **IaC Scanning**: Checkov scans Terraform, CloudFormation, Kubernetes, and Bicep manifests.
 - **Container Security**: [Trivy](https://github.com/aquasecurity/trivy) scans Docker images for OS and library vulnerabilities.
 - **DAST**: [OWASP ZAP](https://www.zaproxy.org/) baseline scan for runtime attack surface.
 - **Signing**: [Cosign](https://github.com/sigstore/cosign) signs container images.
@@ -33,6 +33,7 @@ Automated checks on every push and pull request across **6 CI platforms**.
 ### Phase 3: Platform & Intelligence
 
 - **AI Triage**: Automated findings analysis and prioritisation via LLMs.
+- **DevSecOps Adoption Roadmap**: 30/60/90-day prioritized plan with maturity and feasibility scores.
 - **Auto-Remediation**: Self-healing pipelines that open PRs to fix vulnerabilities.
 - **Cross-Repo Analyzer**: Shared dependency and vulnerability hotspot analysis across many repositories.
 - **Security Dashboard**: Real-time visualisations of security posture and trends.
@@ -79,7 +80,24 @@ docker run --rm \
   fortressci/scan /workspace
 ```
 
-This runs the full suite including AI triage, SBOM generation, and threshold gating.
+This runs the full suite including AI triage, SBOM generation, threshold gating, and an adoption roadmap.
+
+---
+
+## Azure DevOps Integration
+
+FortressCI ships an Azure DevOps pipeline template at `templates/azure/azure-pipelines.yml`.
+
+```bash
+# Generate Azure pipeline + FortressCI config in your repo
+./scripts/fortressci-init.sh --ci azure
+```
+
+The Azure pipeline:
+- Builds `fortressci/scan` in CI.
+- Runs the full FortressCI scan with policy gates.
+- Validates required secrets (`SNYK_TOKEN`) before scanning.
+- Publishes `results/` as a build artifact, including `adoption-roadmap.json`, `adoption-roadmap.md`, and IaC SARIF outputs such as `bicep.sarif`.
 
 ---
 
@@ -184,6 +202,20 @@ python3 scripts/ai-triage.py --results-dir results/ --config .fortressci.yml
 
 ---
 
+## DevSecOps Adoption Roadmap
+
+Generate a practical, prioritized adoption plan with maturity and feasibility scoring.
+
+```bash
+python3 scripts/generate-adoption-roadmap.py --results-dir results/ --workspace . --config .fortressci.yml
+```
+
+Outputs:
+- `results/adoption-roadmap.json` (machine-readable roadmap with scoring and priority)
+- `results/adoption-roadmap.md` (human-readable 30/60/90 plan)
+
+---
+
 ## Cross-Repo Dependency Risk Analysis
 
 Use SBOM and SCA outputs from multiple repositories to find shared dependency
@@ -224,6 +256,7 @@ Output: `./org-results/cross-repo-analysis.json`
 │   ├── auto-fix.sh                # Automated remediation
 │   ├── cross-repo-analyzer.py     # Shared dependency risk analysis
 │   ├── generate-badge.py          # Security scoring & badges
+│   ├── generate-adoption-roadmap.py # DevSecOps roadmap + feasibility scoring
 │   ├── generate-sbom.sh           # SBOM generator
 │   ├── fortressci-policy-check.sh # Policy enforcement
 │   ├── generate-report.py         # HTML report generator
