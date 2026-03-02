@@ -45,7 +45,7 @@ python3 scripts/summarize.py <results_dir>
 ./scripts/generate_keys.sh
 ```
 
-There are no unit tests or linters — this is a blueprint/template project, not a library.
+There are basic linters and script tests in CI (`actionlint`, `shellcheck`, `yamllint`, `pytest`, `bats`).
 
 ## Architecture
 
@@ -54,7 +54,9 @@ There are no unit tests or linters — this is a blueprint/template project, not
 2. **Phase 2 (CI/CD):** Pipeline runs 6 parallel security scans + signing/attestation + reporting
 3. **Phase 3 (Infrastructure):** Container registry signing, SBOM generation, artifact storage
 
-**Primary CI workflow** (`.github/workflows/devsecops.yml`): 9 jobs — secret-scan, sast-scan, sca-scan, iac-scan, cost-estimation, container-build-sign, dast-scan, compliance-audit, pr-feedback. Most jobs use `continue-on-error: true` with separate gatekeeper steps for severity thresholds.
+**Primary CI workflow** (`.github/workflows/devsecops.yml`): the app-facing reference pipeline. In the FortressCI repo itself, the `container-build-sign` and `dast-scan` jobs are skipped so the root scanner image is not treated as a sample target app.
+
+**Scanner image workflow** (`.github/workflows/scanner-image.yml`): builds the FortressCI scanner image, verifies pinned tool versions, runs a non-blocking Trivy report, and uploads `.security/scanner-image-waivers.md` as context for known temporary upstream CVEs.
 
 **Report pipeline:** SARIF/JSON scan outputs → `generate-report.py` (parses findings) → `templates/report.html.j2` (Jinja2) → interactive HTML report with charts/filtering.
 
@@ -101,7 +103,7 @@ There are no unit tests or linters — this is a blueprint/template project, not
 - **Python**: Report generation, SARIF parsing (uses `jinja2`, `json`, `argparse`)
 - **JavaScript**: PR comment posting (GitHub Actions script)
 - **YAML**: All CI/CD configs, pre-commit hooks, waivers
-- **Docker**: All-in-one scanner image (Ubuntu 22.04 base, installs all tools via pip/npm/curl)
+- **Docker**: All-in-one scanner image (Ubuntu 24.04 base, pinned tool versions, checksum-verified installer downloads)
 
 ## Conventions
 

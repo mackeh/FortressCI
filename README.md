@@ -82,6 +82,11 @@ docker run --rm \
 
 This runs the full suite including AI triage, SBOM generation, threshold gating, and an adoption roadmap.
 
+The scanner image is maintained separately from the main repository scan flow:
+- `.github/workflows/devsecops.yml` is the app-facing reference pipeline.
+- `.github/workflows/scanner-image.yml` builds and inspects the FortressCI scanner image itself.
+- Scanner image Trivy findings are currently report-only and tracked in `.security/scanner-image-waivers.md` when upstream tool vendors have not yet shipped fixed binaries.
+
 ---
 
 ## Azure DevOps Integration
@@ -98,6 +103,8 @@ The Azure pipeline:
 - Runs the full FortressCI scan with policy gates.
 - Validates required secrets (`SNYK_TOKEN`) before scanning.
 - Publishes `results/` as a build artifact, including `adoption-roadmap.json`, `adoption-roadmap.md`, and IaC SARIF outputs such as `bicep.sarif`.
+
+For the FortressCI repository itself, scanner image maintenance is handled by the dedicated `Scanner Image Maintenance` workflow so root image CVEs do not pollute the main repo code-scanning flow.
 
 ---
 

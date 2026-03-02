@@ -51,6 +51,11 @@ Check for unpinned GitHub Actions and Docker base images:
 ./scripts/check-pinning.sh --strict
 ```
 
+The FortressCI repository now separates scanner image maintenance from the app-facing reference workflow:
+- `.github/workflows/devsecops.yml` remains the reference DevSecOps pipeline for adopters.
+- `.github/workflows/scanner-image.yml` validates the root `Dockerfile` and uploads a non-blocking Trivy report for the scanner image itself.
+- Temporary upstream scanner-image CVEs are documented in `.security/scanner-image-waivers.md`.
+
 ## Configuration and Policies
 
 ### Severity Thresholds (`.fortressci.yml`)
