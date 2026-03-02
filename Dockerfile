@@ -8,6 +8,9 @@ ARG TRIVY_VERSION=v0.69.2
 ARG SYFT_VERSION=v1.42.1
 ARG COSIGN_VERSION=v3.0.5
 
+# Pin trusted installer/binary checksums from upstream sources.
+COPY .security/tooling-checksums.env /tmp/fortressci-tooling-checksums.env
+
 # Install core dependencies
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -23,17 +26,22 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     && rm -rf /var/lib/apt/lists/*
 
 # Install Security Tools
-RUN curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh -o /tmp/install-trufflehog.sh && \
+RUN . /tmp/fortressci-tooling-checksums.env && \
+    curl -sSfL "https://raw.githubusercontent.com/trufflesecurity/trufflehog/${TRUFFLEHOG_INSTALL_SCRIPT_COMMIT}/scripts/install.sh" -o /tmp/install-trufflehog.sh && \
+    echo "${TRUFFLEHOG_INSTALL_SCRIPT_SHA256}  /tmp/install-trufflehog.sh" | sha256sum -c - && \
     sh /tmp/install-trufflehog.sh -b /usr/local/bin && \
     python3 -m pip install --no-cache-dir --break-system-packages semgrep checkov jinja2 && \
     npm install -g "snyk@${SNYK_VERSION}" && npm cache clean --force && \
-    curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh -o /tmp/install-trivy.sh && \
+    curl -sSfL "https://raw.githubusercontent.com/aquasecurity/trivy/${TRIVY_INSTALL_SCRIPT_COMMIT}/contrib/install.sh" -o /tmp/install-trivy.sh && \
+    echo "${TRIVY_INSTALL_SCRIPT_SHA256}  /tmp/install-trivy.sh" | sha256sum -c - && \
     sh /tmp/install-trivy.sh -b /usr/local/bin "${TRIVY_VERSION}" && \
-    curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh -o /tmp/install-syft.sh && \
+    curl -sSfL "https://raw.githubusercontent.com/anchore/syft/${SYFT_INSTALL_SCRIPT_COMMIT}/install.sh" -o /tmp/install-syft.sh && \
+    echo "${SYFT_INSTALL_SCRIPT_SHA256}  /tmp/install-syft.sh" | sha256sum -c - && \
     sh /tmp/install-syft.sh -b /usr/local/bin "${SYFT_VERSION}" && \
     curl -sSfL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" -o /usr/local/bin/cosign && \
+    echo "${COSIGN_LINUX_AMD64_SHA256}  /usr/local/bin/cosign" | sha256sum -c - && \
     chmod +x /usr/local/bin/cosign && \
-    rm -f /tmp/install-trufflehog.sh /tmp/install-trivy.sh /tmp/install-syft.sh
+    rm -f /tmp/fortressci-tooling-checksums.env /tmp/install-trufflehog.sh /tmp/install-trivy.sh /tmp/install-syft.sh
 
 # Copy scripts
 COPY scripts/run-all.sh /usr/local/bin/fortressci-scan

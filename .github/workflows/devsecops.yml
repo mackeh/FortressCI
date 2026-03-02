@@ -46,12 +46,15 @@ jobs:
 
       - name: Install lint tooling
         run: |
+          source .security/tooling-checksums.env
           sudo apt-get update
           sudo apt-get install -y shellcheck yamllint
           curl -sSL -o /tmp/actionlint.tgz \
             https://github.com/rhysd/actionlint/releases/download/v1.7.4/actionlint_1.7.4_linux_amd64.tar.gz
+          echo "$ACTIONLINT_TARBALL_SHA256  /tmp/actionlint.tgz" | sha256sum -c -
           tar -xzf /tmp/actionlint.tgz -C /tmp
           sudo mv /tmp/actionlint /usr/local/bin/actionlint
+          rm -f /tmp/actionlint.tgz
           actionlint -version
 
       - name: Lint GitHub workflows (actionlint)
@@ -64,6 +67,7 @@ jobs:
         run: |
           yamllint -c .yamllint.yml \
             .github/workflows/devsecops.yml \
+            .github/workflows/scanner-image.yml \
             .pre-commit-config.yaml \
             .fortressci.yml \
             .security/*.yml \
@@ -236,7 +240,11 @@ jobs:
       - name: Install Infracost
         if: env.INFRACOST_API_KEY != ''
         run: |
-          curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+          source .security/tooling-checksums.env
+          curl -fsSL "https://raw.githubusercontent.com/infracost/infracost/${INFRACOST_INSTALL_SCRIPT_COMMIT}/scripts/install.sh" -o /tmp/install-infracost.sh
+          echo "$INFRACOST_INSTALL_SCRIPT_SHA256  /tmp/install-infracost.sh" | sha256sum -c -
+          sh /tmp/install-infracost.sh
+          rm -f /tmp/install-infracost.sh
           echo "$HOME/.infracost/bin" >> "$GITHUB_PATH"
 
       - name: Infracost Breakdown
@@ -258,6 +266,10 @@ jobs:
   container-build-sign:
     name: Build & Sign (Trivy + Cosign)
     runs-on: ubuntu-latest
+    # FortressCI's root Dockerfile builds the scanner image itself.
+    # Maintain that image in a dedicated workflow to avoid mixing scanner
+    # image CVEs into this repo's app-facing code scanning results.
+    if: github.repository != 'mackeh/FortressCI'
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -329,6 +341,7 @@ jobs:
     name: Runtime Security (DAST)
     runs-on: ubuntu-latest
     needs: [container-build-sign]
+    if: github.repository != 'mackeh/FortressCI'
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -381,8 +394,12 @@ jobs:
 
       - name: Generate Source SBOM
         run: |
+          source .security/tooling-checksums.env
           mkdir -p results
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          curl -sSfL "https://raw.githubusercontent.com/anchore/syft/${SYFT_INSTALL_SCRIPT_COMMIT}/install.sh" -o /tmp/install-syft.sh
+          echo "$SYFT_INSTALL_SCRIPT_SHA256  /tmp/install-syft.sh" | sha256sum -c -
+          sh /tmp/install-syft.sh -b /usr/local/bin v1.42.1
+          rm -f /tmp/install-syft.sh
           /usr/local/bin/syft dir:. -o spdx-json > results/sbom-source.spdx.json
           /usr/local/bin/syft dir:. -o cyclonedx-json > results/sbom-source.cdx.json
 

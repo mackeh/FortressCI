@@ -1,0 +1,64 @@
+name: Scanner Image Maintenance
+
+on:
+  push:
+    branches: ["main", "master"]
+    paths:
+      - "Dockerfile"
+      - ".security/tooling-checksums.env"
+      - "scripts/**"
+      - "templates/**"
+      - ".github/workflows/scanner-image.yml"
+  pull_request:
+    branches: ["main", "master"]
+    paths:
+      - "Dockerfile"
+      - ".security/tooling-checksums.env"
+      - "scripts/**"
+      - "templates/**"
+      - ".github/workflows/scanner-image.yml"
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scanner-image-build:
+    name: Build and Verify Scanner Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Build scanner image
+        run: docker build -t fortressci-scan:${{ github.sha }} .
+
+      - name: Verify installed toolchain
+        run: |
+          docker run --rm --entrypoint /bin/sh fortressci-scan:${{ github.sha }} -lc '
+            set -e
+            trivy --version
+            syft version
+            snyk --version
+            cosign version | grep "GitVersion"
+          '
+
+      - name: Trivy gate (scanner image)
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
+        with:
+          image-ref: fortressci-scan:${{ github.sha }}
+          format: table
+          output: scanner-image-trivy.txt
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+
+      - name: Upload scanner image Trivy report
+        if: always()
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: scanner-image-trivy
+          path: scanner-image-trivy.txt
+          if-no-files-found: warn
