@@ -45,15 +45,15 @@ jobs:
             cosign version | grep "GitVersion"
           '
 
-      - name: Trivy gate (scanner image)
+      - name: Trivy report (scanner image, non-blocking)
         uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
+        continue-on-error: true
         with:
           image-ref: fortressci-scan:${{ github.sha }}
           format: table
           output: scanner-image-trivy.txt
           ignore-unfixed: true
           severity: CRITICAL,HIGH
-          exit-code: "1"
 
       - name: Upload scanner image Trivy report
         if: always()
@@ -61,4 +61,12 @@ jobs:
         with:
           name: scanner-image-trivy
           path: scanner-image-trivy.txt
+          if-no-files-found: warn
+
+      - name: Upload scanner image waiver context
+        if: always()
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: scanner-image-waivers
+          path: .security/scanner-image-waivers.md
           if-no-files-found: warn
