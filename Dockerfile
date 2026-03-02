@@ -1,10 +1,16 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
+ARG SNYK_VERSION=1.1303.0
+ARG TRIVY_VERSION=v0.69.2
+ARG SYFT_VERSION=v1.42.1
+ARG COSIGN_VERSION=v3.0.5
+
 # Install core dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
+    ca-certificates \
     python3 \
     python3-pip \
     nodejs \
@@ -17,13 +23,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Security Tools
-RUN curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin && \
-    python3 -m pip install --no-cache-dir semgrep checkov jinja2 && \
-    npm install -g snyk && npm cache clean --force && \
-    curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin && \
-    curl -sSfL https://github.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin && \
-    curl -sSfL https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 -o /usr/local/bin/cosign && \
-    chmod +x /usr/local/bin/cosign
+RUN curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh -o /tmp/install-trufflehog.sh && \
+    sh /tmp/install-trufflehog.sh -b /usr/local/bin && \
+    python3 -m pip install --no-cache-dir --break-system-packages semgrep checkov jinja2 && \
+    npm install -g "snyk@${SNYK_VERSION}" && npm cache clean --force && \
+    curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh -o /tmp/install-trivy.sh && \
+    sh /tmp/install-trivy.sh -b /usr/local/bin "${TRIVY_VERSION}" && \
+    curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh -o /tmp/install-syft.sh && \
+    sh /tmp/install-syft.sh -b /usr/local/bin "${SYFT_VERSION}" && \
+    curl -sSfL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" -o /usr/local/bin/cosign && \
+    chmod +x /usr/local/bin/cosign && \
+    rm -f /tmp/install-trufflehog.sh /tmp/install-trivy.sh /tmp/install-syft.sh
 
 # Copy scripts
 COPY scripts/run-all.sh /usr/local/bin/fortressci-scan
