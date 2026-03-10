@@ -75,6 +75,53 @@ if [ -f "$RESULTS_DIR/sbom-source.spdx.json" ]; then
     echo "   ✅ Pass"
 fi
 
+# 5. No Secrets Detected (FCI-POL-005)
+if is_enabled "FCI-POL-005"; then
+    TOTAL_POLICIES=$((TOTAL_POLICIES + 1))
+    echo "🔍 [FCI-POL-005] Checking for leaked secrets..."
+    SUMMARY_FILE="$RESULTS_DIR/summary.json"
+    if [ -f "$SUMMARY_FILE" ]; then
+        SECRET_COUNT=$(jq '.tools.trufflehog | (.critical + .high + .medium + .low)' "$SUMMARY_FILE" 2>/dev/null || echo "0")
+        if [ "$SECRET_COUNT" -eq 0 ]; then
+            echo "   ✅ Pass"
+        else
+            echo "   ❌ Fail: Found $SECRET_COUNT secret(s) in codebase"
+            FAILED=1
+        fi
+    else
+        echo "   ⚠️  Skip: summary.json not found"
+    fi
+fi
+
+# 6. Security Waivers Must Not Be Expired (FCI-POL-006)
+if is_enabled "FCI-POL-006"; then
+    TOTAL_POLICIES=$((TOTAL_POLICIES + 1))
+    echo "🔍 [FCI-POL-006] Checking for expired waivers..."
+    WAIVERS_FILE="${RESULTS_DIR}/../.security/waivers.yml"
+    # Fallback: look in workspace root
+    if [ ! -f "$WAIVERS_FILE" ]; then
+        WAIVERS_FILE=".security/waivers.yml"
+    fi
+    if [ -f "$WAIVERS_FILE" ]; then
+        TODAY_STAMP=$(date +%Y-%m-%d)
+        EXPIRED_COUNT=0
+        while IFS= read -r line; do
+            expires=$(echo "$line" | grep -oP 'expires_on:\s*"\K[^"]+' || true)
+            if [ -n "$expires" ] && [ "$expires" \< "$TODAY_STAMP" ]; then
+                EXPIRED_COUNT=$((EXPIRED_COUNT + 1))
+            fi
+        done < <(grep "expires_on:" "$WAIVERS_FILE" 2>/dev/null)
+        if [ "$EXPIRED_COUNT" -eq 0 ]; then
+            echo "   ✅ Pass"
+        else
+            echo "   ❌ Fail: $EXPIRED_COUNT expired waiver(s) — run 'fortressci-waiver.sh expire' to clean up"
+            FAILED=1
+        fi
+    else
+        echo "   ⚠️  Skip: waivers.yml not found"
+    fi
+fi
+
 echo ""
 if [ "$FAILED" -eq 1 ]; then
     echo "❌ Policy check FAILED"

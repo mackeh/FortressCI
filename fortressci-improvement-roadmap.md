@@ -4,7 +4,7 @@ This roadmap focuses on the highest-leverage changes that reduce false signal, i
 
 ## Priority 1: Separate Scanner Image Maintenance From App Scanning
 
-Status: In progress
+Status: ✅ Complete
 
 Why it matters:
 - FortressCI's root `Dockerfile` builds the scanner image, not a target application image.
@@ -23,16 +23,16 @@ Success criteria:
 
 ## Priority 2: Fail-Closed Binary Supply Chain
 
-Status: Planned
+Status: ✅ Complete
 
 Why it matters:
 - The project installs several tools via remote shell scripts and binary downloads.
 - Version pinning helps, but integrity verification is still the stronger control.
 
 Implementation:
-- Add checksum or signature verification for every downloaded installer and binary in `Dockerfile` and CI scripts.
-- Record the expected versions and digests in one tracked manifest.
-- Make CI fail immediately when an external artifact changes unexpectedly.
+- Added checksum or signature verification for every downloaded installer and binary in `Dockerfile` and CI scripts.
+- Recorded the expected versions and digests in `.security/tooling-checksums.env`.
+- CI fails immediately when an external artifact changes unexpectedly.
 
 Success criteria:
 - Every `curl`-fetched binary is verified before execution.
@@ -40,16 +40,16 @@ Success criteria:
 
 ## Priority 3: Expand Deterministic Script Tests
 
-Status: Planned
+Status: ✅ Complete
 
 Why it matters:
 - FortressCI is script-first, but most validation is still runtime smoke testing.
 - Regressions in shell glue and report generation are easy to miss without fixtures.
 
 Implementation:
-- Add fixture-driven Bash tests for `run-all.sh`, `check-thresholds.sh`, and `fortressci-policy-check.sh`.
-- Add Python tests for report generation and result normalization paths.
-- Use stable sample `results/` fixtures so behavior changes are intentional and reviewable.
+- Added fixture-driven Bats tests for `fortressci-policy-check.sh` and `fortressci-waiver.sh`.
+- Added fixture-driven Python tests for `summarize.py` result aggregation and waiver status.
+- Tests use in-memory fixtures so behavior changes are intentional and reviewable.
 
 Success criteria:
 - Core scripts have deterministic tests covering success and failure paths.
@@ -57,15 +57,16 @@ Success criteria:
 
 ## Priority 4: Diff-Aware Scanning Modes
 
-Status: Planned
+Status: ✅ Complete
 
 Why it matters:
 - Running every scanner across the whole repository on every PR is slower and noisier than necessary.
 
 Implementation:
-- Add changed-file detection for PRs.
-- Run focused scans in PRs and preserve full baseline scans for `main`, scheduled runs, and manual dispatches.
-- Report which files were scanned so the reduced scope is explicit.
+- Added `scripts/changed-files.sh` for PR changed-file detection and categorisation.
+- Added `detect-changes` job to `devsecops.yml` that outputs scan category flags.
+- SAST, SCA, and IaC scan jobs skip on PRs when their file category has no changes.
+- Full baseline scans preserved for `main`, scheduled runs, and manual dispatches.
 
 Success criteria:
 - PR runtimes drop while retaining scheduled full coverage.
@@ -73,15 +74,16 @@ Success criteria:
 
 ## Priority 5: Waiver Governance
 
-Status: Planned
+Status: ✅ Complete
 
 Why it matters:
 - Exception processes degrade quickly if they are not time-bounded and attributable.
 
 Implementation:
-- Require owner, reason, and expiration metadata on waivers.
-- Surface expiring and expired waivers in generated reports.
-- Add policy checks that fail on invalid or stale exceptions.
+- Implemented FCI-POL-005 (no secrets) and FCI-POL-006 (expired waivers) in `fortressci-policy-check.sh`.
+- `summarize.py` now surfaces active, expired, and expiring_soon waiver counts in `summary.json`.
+- `check-thresholds.sh` properly deducts active waivers per-severity from finding counts.
+- Expiring (within 14 days) and expired waivers are highlighted in scan output.
 
 Success criteria:
 - Waivers become auditable and time-boxed.

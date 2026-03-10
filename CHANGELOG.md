@@ -6,6 +6,22 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2.3.1] - 2026-03-10
+
+### Added
+- Added waiver governance enforcement: FCI-POL-005 (no secrets) and FCI-POL-006 (expired waivers) in `fortressci-policy-check.sh`.
+- Added waiver status reporting (active/expired/expiring_soon) to `summarize.py` and `summary.json`.
+- Added diff-aware scanning: `scripts/changed-files.sh` detects changed files in PRs and categorises them by scan type.
+- Added `detect-changes` job to `devsecops.yml` — SAST, SCA, and IaC scans skip on PRs when their file category has no changes.
+- Added fixture-driven tests: `tests/python/test_summarize.py` (4 tests), `tests/bash/fortressci-policy-check.bats` (5 tests), `tests/bash/fortressci-waiver.bats` (6 tests).
+
+### Changed
+- Fixed `check-thresholds.sh` to subtract active waivers per-severity from finding counts before threshold evaluation.
+- Hardened `run-all.sh` with `set -euo pipefail` and quoted all variable expansions.
+
+### Fixed
+- Fixed `check-thresholds.sh` waiver condition grouping (precedence bug with `||` vs `&&`).
+
 ## [2.2.0] - 2026-02-16
 
 ### Added

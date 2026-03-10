@@ -280,6 +280,42 @@
 
 ---
 
+### 2.0.10 — Waiver Governance [COMPLETED ✅]
+
+**Goal:** Make security waivers auditable, time-boxed, and visible in reports.
+
+**Achievements:**
+- Implemented FCI-POL-005 (no secrets) and FCI-POL-006 (expired waivers) in `fortressci-policy-check.sh`.
+- `summarize.py` now surfaces active, expired, and expiring_soon waiver counts in `summary.json`.
+- Fixed `check-thresholds.sh` to properly deduct active waivers per-severity from finding counts.
+- Expiring (within 14 days) and expired waivers are highlighted in scan output.
+
+---
+
+### 2.0.11 — Diff-Aware PR Scanning [COMPLETED ✅]
+
+**Goal:** Reduce PR scan times by only running scanners relevant to the changed files.
+
+**Achievements:**
+- Added `scripts/changed-files.sh` for PR-level changed-file detection and categorisation.
+- Added `detect-changes` job to `devsecops.yml` that outputs scan category flags.
+- SAST, SCA, and IaC scan jobs conditionally skip on PRs when their file category has no changes.
+- Full baseline scans preserved for `main`, scheduled runs, and manual dispatches.
+
+---
+
+### 2.0.12 — Expanded Deterministic Test Suite [COMPLETED ✅]
+
+**Goal:** Prevent regressions in core security scripts with fixture-driven tests.
+
+**Achievements:**
+- Added `tests/python/test_summarize.py` (4 tests covering aggregation, empty results, Bicep, and waiver status).
+- Added `tests/bash/fortressci-policy-check.bats` (5 tests covering FCI-POL-003, 005, 006 pass/fail paths).
+- Added `tests/bash/fortressci-waiver.bats` (6 tests covering add, duplicate rejection, max_expiry_days, list filter, remove).
+- Hardened `run-all.sh` with `set -euo pipefail` and quoted all variable expansions.
+
+---
+
 ## Long-Term Vision
 
 ### FortressCI Cloud (SaaS)

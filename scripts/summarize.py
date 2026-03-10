@@ -1,6 +1,7 @@
 import json
 import sys
 import os
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 
@@ -67,6 +68,55 @@ def total_for(counts):
     return sum(counts.values())
 
 
+def summarize_waivers(waivers_path):
+    """Read waivers.yml and return active/expired/expiring_soon counts."""
+    result = {"active": 0, "expired": 0, "expiring_soon": 0}
+    try:
+        import yaml
+        with open(waivers_path) as f:
+            data = yaml.safe_load(f)
+        waivers = (data or {}).get("waivers") or []
+    except Exception:
+        # Fallback: simple line-based parsing if PyYAML unavailable
+        waivers = []
+        try:
+            with open(waivers_path) as f:
+                content = f.read()
+            if "waivers: []" in content:
+                return result
+            import re
+            expires_dates = re.findall(r'expires_on:\s*["\']?(\d{4}-\d{2}-\d{2})', content)
+            today = date.today()
+            soon = today + timedelta(days=14)
+            for d in expires_dates:
+                exp = datetime.strptime(d, "%Y-%m-%d").date()
+                if exp < today:
+                    result["expired"] += 1
+                else:
+                    result["active"] += 1
+                    if exp <= soon:
+                        result["expiring_soon"] += 1
+            return result
+        except FileNotFoundError:
+            return result
+
+    today = date.today()
+    soon = today + timedelta(days=14)
+    for w in waivers:
+        expires_str = w.get("expires_on", "9999-12-31")
+        try:
+            exp = datetime.strptime(str(expires_str), "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            continue
+        if exp < today:
+            result["expired"] += 1
+        else:
+            result["active"] += 1
+            if exp <= soon:
+                result["expiring_soon"] += 1
+    return result
+
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: summarize.py <results_dir>")
@@ -107,6 +157,13 @@ def main():
         "total_findings": sum(totals.values()),
     }
 
+    # Waiver status
+    waivers_path = results_dir.parent / ".security" / "waivers.yml"
+    if not waivers_path.exists():
+        waivers_path = Path(".security/waivers.yml")
+    if waivers_path.exists():
+        summary["waivers"] = summarize_waivers(str(waivers_path))
+
     # Write structured JSON for downstream tools (check-thresholds, PR comments)
     summary_path = results_dir / "summary.json"
     with open(summary_path, "w") as f:
@@ -125,6 +182,15 @@ def main():
     print(f"{'TOTAL':<14} {totals['critical']:>5} {totals['high']:>5} {totals['medium']:>5} {totals['low']:>5} {t:>6}")
     print()
 
+    if "waivers" in summary:
+        w = summary["waivers"]
+        print(f"🛡️  Waivers: {w['active']} active, {w['expired']} expired, {w['expiring_soon']} expiring soon")
+        if w["expired"] > 0:
+            print(f"⚠️  {w['expired']} expired waiver(s) — run 'fortressci-waiver.sh expire'")
+        if w["expiring_soon"] > 0:
+            print(f"⏰ {w['expiring_soon']} waiver(s) expiring within 14 days")
+        print()
+
     if totals["critical"] > 0:
         print(f"\u274c {totals['critical']} critical finding(s) detected!")
     if totals["high"] > 0:
@@ -140,3 +206,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

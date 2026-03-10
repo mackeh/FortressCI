@@ -51,19 +51,35 @@ TOTAL=$(jq '.total_findings' "$SUMMARY_FILE")
 WAIVERS_PATH=$(yaml_get "$CONFIG_PATH" "path" 2>/dev/null || echo ".security/waivers.yml")
 WAIVERS_PATH="${WAIVERS_PATH:-.security/waivers.yml}"
 WAIVER_COUNT=0
+WAIVER_CRITICAL=0
+WAIVER_HIGH=0
+WAIVER_MEDIUM=0
+WAIVER_LOW=0
 TODAY=$(date +%Y-%m-%d)
 
 if [ -f "$WAIVERS_PATH" ]; then
     # Count active (non-expired) waivers by severity
-    # Simple approach: count waivers where expires_on >= today
     while IFS= read -r line; do
         expires=$(echo "$line" | grep -oP 'expires_on:\s*"\K[^"]+' || true)
         severity=$(echo "$line" | grep -oP 'severity:\s*"\K[^"]+' || true)
-        if [ -n "$expires" ] && [ "$expires" \> "$TODAY" ] || [ "$expires" = "$TODAY" ]; then
+        if [ -n "$expires" ] && { [ "$expires" \> "$TODAY" ] || [ "$expires" = "$TODAY" ]; }; then
             WAIVER_COUNT=$((WAIVER_COUNT + 1))
+            case "$severity" in
+                critical) WAIVER_CRITICAL=$((WAIVER_CRITICAL + 1)) ;;
+                high)     WAIVER_HIGH=$((WAIVER_HIGH + 1)) ;;
+                medium)   WAIVER_MEDIUM=$((WAIVER_MEDIUM + 1)) ;;
+                low)      WAIVER_LOW=$((WAIVER_LOW + 1)) ;;
+            esac
         fi
     done < <(grep -A5 "^  - id:" "$WAIVERS_PATH" 2>/dev/null | paste -d' ' - - - - - -)
 fi
+
+# Subtract active waivers per-severity (floor at 0)
+subtract() { local v=$(( $1 - $2 )); echo $(( v > 0 ? v : 0 )); }
+CRITICAL=$(subtract "$CRITICAL" "$WAIVER_CRITICAL")
+HIGH=$(subtract "$HIGH" "$WAIVER_HIGH")
+MEDIUM=$(subtract "$MEDIUM" "$WAIVER_MEDIUM")
+LOW=$(subtract "$LOW" "$WAIVER_LOW")
 
 echo "🏰 FortressCI Threshold Check"
 echo "=============================="
@@ -72,10 +88,10 @@ echo "Fail on:    $FAIL_ON"
 echo "Warn on:    $WARN_ON"
 echo ""
 echo "Findings:   $TOTAL total"
-echo "  Critical: $CRITICAL"
-echo "  High:     $HIGH"
-echo "  Medium:   $MEDIUM"
-echo "  Low:      $LOW"
+echo "  Critical: $CRITICAL (after waivers)"
+echo "  High:     $HIGH (after waivers)"
+echo "  Medium:   $MEDIUM (after waivers)"
+echo "  Low:      $LOW (after waivers)"
 echo "Waivers:    $WAIVER_COUNT active"
 echo ""
 

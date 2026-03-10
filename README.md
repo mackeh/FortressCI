@@ -38,6 +38,8 @@ Automated checks on every push and pull request across **6 CI platforms**.
 - **Cross-Repo Analyzer**: Shared dependency and vulnerability hotspot analysis across many repositories.
 - **Security Dashboard**: Real-time visualisations of security posture and trends.
 - **MCP Server**: Native integration for AI assistants to query security data.
+- **Waiver Governance**: Expired/expiring waiver detection, auditable exceptions with policy enforcement.
+- **Diff-Aware Scanning**: PR-scoped scans that skip irrelevant scanners based on changed file types.
 
 ---
 
@@ -259,13 +261,14 @@ Output: `./org-results/cross-repo-analysis.json`
 │   ├── fortressci-init.sh         # Setup wizard CLI
 │   ├── fortressci-doctor.sh       # Health checks for local/CI readiness
 │   ├── run-all.sh                 # Docker scan orchestrator
+│   ├── changed-files.sh           # PR diff-aware file detection
 │   ├── ai-triage.py               # AI findings analysis
 │   ├── auto-fix.sh                # Automated remediation
 │   ├── cross-repo-analyzer.py     # Shared dependency risk analysis
 │   ├── generate-badge.py          # Security scoring & badges
 │   ├── generate-adoption-roadmap.py # DevSecOps roadmap + feasibility scoring
 │   ├── generate-sbom.sh           # SBOM generator
-│   ├── fortressci-policy-check.sh # Policy enforcement
+│   ├── fortressci-policy-check.sh # Policy enforcement (incl. waiver governance)
 │   ├── generate-report.py         # HTML report generator
 │   └── check-pinning.sh           # Supply chain pinning checker
 ├── tests/

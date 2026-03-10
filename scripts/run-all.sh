@@ -1,24 +1,24 @@
 #!/bin/bash
-set -e
-WORKSPACE=${1:-.}
+set -euo pipefail
+WORKSPACE="${1:-.}"
 RESULTS_DIR="/results"
-mkdir -p $RESULTS_DIR
+mkdir -p "$RESULTS_DIR"
 
 echo "🏰 FortressCI Local Scan"
 echo "========================"
 
 echo "🔐 [1/6] Secret scanning (TruffleHog)..."
-trufflehog filesystem $WORKSPACE --json > $RESULTS_DIR/secrets.json 2>&1 || true
+trufflehog filesystem "$WORKSPACE" --json > "$RESULTS_DIR/secrets.json" 2>&1 || true
 
 echo "🔍 [2/6] SAST (Semgrep)..."
-semgrep --config auto --sarif -o $RESULTS_DIR/sast.sarif $WORKSPACE || true
+semgrep --config auto --sarif -o "$RESULTS_DIR/sast.sarif" "$WORKSPACE" || true
 
 echo "📦 [3/6] SCA (Snyk)..."
 # Snyk requires authentication, skip if token not present or handle gracefully
-if [ -z "$SNYK_TOKEN" ]; then
+if [ -z "${SNYK_TOKEN:-}" ]; then
     echo "⚠️ SNYK_TOKEN not found. Skipping Snyk scan."
 else
-    snyk test --json $WORKSPACE > $RESULTS_DIR/sca.json || true
+    snyk test --json "$WORKSPACE" > "$RESULTS_DIR/sca.json" || true
 fi
 
 echo "🏗️ [4/6] IaC (Checkov)..."
@@ -45,7 +45,7 @@ fi
 
 echo "🐳 [5/6] Container scan (Trivy)..."
 if [ -f "$WORKSPACE/Dockerfile" ]; then
-    trivy fs --scanners vuln --format sarif -o $RESULTS_DIR/container.sarif $WORKSPACE
+    trivy fs --scanners vuln --format sarif -o "$RESULTS_DIR/container.sarif" "$WORKSPACE"
 else
     echo "No Dockerfile found. Skipping container scan."
 fi
