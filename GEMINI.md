@@ -97,6 +97,10 @@ Waivers are stored in `.security/waivers.yml`.
 - `scripts/auto-fix.sh`: Automatically applies security remediation fixes.
 - `scripts/build-attack-graph.py`: Generates vulnerability chain relationship graphs.
 - `scripts/cross-repo-analyzer.py`: Analyzes shared dependencies across multiple projects.
+- `scripts/changed-files.sh`: Diff-aware PR scanning — detects changed files by scan category.
+- `scripts/fortressci-policy-check.sh`: Enforces organisational security policies (FCI-POL-001–006).
+- `scripts/fortressci-doctor.sh`: Health checks for config, hooks, tools, secrets, and CI setup.
+- `scripts/generate-adoption-roadmap.py`: 30/60/90-day DevSecOps roadmap with maturity scoring.
 - `integrations/mcp-server/server.py`: MCP server for AI assistant integration.
 - `dashboard/index.html`: Web-based security operations dashboard.
 - `playground/index.html`: Interactive browser-based security scan simulator.

@@ -3,7 +3,7 @@ import json
 import yaml
 import sys
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 def load_json(path):
     if os.path.exists(path):
@@ -20,13 +20,13 @@ def load_yaml(path):
 def generate_report(results_dir, mapping_file, output_file):
     summary = load_json(os.path.join(results_dir, 'summary.json'))
     mappings = load_yaml(mapping_file)
-    
+
     if not summary or not mappings:
         print("Error: Summary or Mappings not found.")
         return
 
     report = {
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "project": os.path.basename(os.getcwd()),
         "overall_status": "PASS" if summary.get('total_findings', 0) == 0 else "REVIEW_REQUIRED",
         "framework_summary": {},

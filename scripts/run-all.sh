@@ -70,12 +70,12 @@ echo "✅ Scan complete. Results in $RESULTS_DIR/"
 # Generate HTML Report
 if [ -f "/usr/local/bin/generate-report.py" ]; then
     echo "📊 Generating HTML report..."
-    python3 /usr/local/bin/generate-report.py $RESULTS_DIR || echo "Failed to generate report"
+    python3 /usr/local/bin/generate-report.py "$RESULTS_DIR" || echo "Failed to generate report"
 fi
 
 # Generate unified summary (produces summary.json)
 if [ -f "/usr/local/bin/summarize.py" ]; then
-    python3 /usr/local/bin/summarize.py $RESULTS_DIR || true
+    python3 /usr/local/bin/summarize.py "$RESULTS_DIR" || true
 else
     echo "Summary script not found."
 fi

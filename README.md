@@ -270,6 +270,8 @@ Output: `./org-results/cross-repo-analysis.json`
 │   ├── generate-sbom.sh           # SBOM generator
 │   ├── fortressci-policy-check.sh # Policy enforcement (incl. waiver governance)
 │   ├── generate-report.py         # HTML report generator
+│   ├── summarize.py               # Aggregates results into summary.json
+│   ├── fortressci-waiver.sh       # CLI for managing security waivers
 │   └── check-pinning.sh           # Supply chain pinning checker
 ├── tests/
 │   ├── python/                    # Pytest suite for Python scripts

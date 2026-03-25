@@ -6,6 +6,18 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-03-25
+
+### Changed
+- Added missing shebangs (`#!/usr/bin/env python3`) to `generate-report.py` and `summarize.py`.
+- Fixed deprecated `datetime.utcnow()` call in `generate-compliance-report.py` — now uses `datetime.now(timezone.utc)`.
+- Fixed unquoted `$RESULTS_DIR` variable expansions in `run-all.sh` for shellcheck compliance.
+- Updated expired example waivers in `.security/waivers.yml` (dates were 2024-12-31, now 2026-12-31).
+- Replaced placeholder `[INSERT EMAIL ADDRESS]` in `CODE_OF_CONDUCT.md` with a contact address.
+- Consolidated duplicate roadmap files: removed `fortressci-improvement-roadmap.md` (all items complete and documented in `ROADMAP.md`).
+- Rewrote `fortressci-roadmap.md` to accurately reflect all delivered phases and remove stale "Upcoming" section that listed already-completed work.
+- Updated `CLAUDE.md` and `GEMINI.md` to include all current scripts and reflect v2.4.0 state.
+
 ## [2.3.1] - 2026-03-10
 
 ### Added

@@ -79,6 +79,10 @@ There are basic linters and script tests in CI (`actionlint`, `shellcheck`, `yam
 | `scripts/cross-repo-analyzer.py` | Analyzes shared dependencies across multiple repositories |
 | `scripts/generate-badge.py` | Calculates security score (A+-F) and badge URL |
 | `scripts/generate-compliance-report.py` | Maps findings to regulatory frameworks (SOC2, NIST, etc.) |
+| `scripts/changed-files.sh` | Diff-aware PR scanning — detects changed files and categorises by scan type |
+| `scripts/fortressci-policy-check.sh` | Policy enforcement (FCI-POL-001 through FCI-POL-006) |
+| `scripts/fortressci-doctor.sh` | Health checks for config, hooks, tools, secrets, and CI setup |
+| `scripts/generate-adoption-roadmap.py` | 30/60/90-day DevSecOps adoption roadmap with maturity scoring |
 | `integrations/mcp-server/` | Model Context Protocol (MCP) server for AI assistants |
 | `dashboard/index.html` | Web-based security operations dashboard |
 | `playground/index.html` | Interactive browser-based security scan simulator |
