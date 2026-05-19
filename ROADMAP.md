@@ -316,6 +316,56 @@
 
 ---
 
+## v2.5.x: Script Hardening & Developer Experience
+
+### 2.5.1 — CLI `--help` Coverage [COMPLETED ✅]
+
+**Goal:** Every executable script should self-document via `--help` / `-h`.
+
+**Achievements:**
+- Added `--help`/`-h` to `scripts/auto-fix.sh`, `scripts/fortressci-init.sh`, `scripts/generate_keys.sh`.
+- Each usage block documents arguments, defaults, and runnable examples.
+- Backed by bats tests in `tests/bash/auto-fix.bats`, `fortressci-init.bats`, `generate-keys.bats` asserting `--help` exit-zero and argument rejection.
+
+### 2.5.2 — Shell Script Hardening [COMPLETED ✅]
+
+**Goal:** Make every shell script fail loud and fail safe.
+
+**Achievements:**
+- Added `set -euo pipefail` to `scripts/fortressci-init.sh` and `scripts/generate_keys.sh`.
+- `generate_keys.sh` now refuses to overwrite an existing `cosign.key` and verifies cosign output.
+- Fixed a duplicate `# Detect CI platform` comment in `fortressci-init.sh`.
+
+### 2.5.3 — Python Linting via Ruff [COMPLETED ✅]
+
+**Goal:** Catch Python bugs (unused imports, mutable-default args) before commit.
+
+**Achievements:**
+- Added `ruff.toml` with conservative pyflakes (`F`) and bugbear (`B`) rules.
+- Added `ruff` + `ruff-format` to `.pre-commit-config.yaml`.
+- Removed unused imports (`sys`, `os`) from `ai-triage.py`, `generate-report.py`, `summarize.py`.
+- Excluded `examples/` and `terraform/` (intentionally vulnerable scanner targets) from lint scope.
+
+### 2.5.4 — MCP Server Hardening [COMPLETED ✅]
+
+**Goal:** Stop the MCP server crashing on malformed scan artifacts.
+
+**Achievements:**
+- Wrapped all file I/O in `integrations/mcp-server/server.py` with try/except (`FileNotFoundError`, `PermissionError`, `json.JSONDecodeError`, `OSError`).
+- Added structured `logging` configurable via `FORTRESSCI_MCP_LOG_LEVEL`.
+- Added env-var overrides: `FORTRESSCI_RESULTS_DIR`, `FORTRESSCI_WAIVERS_PATH`.
+- Tool calls now return readable error strings instead of raising unhandled exceptions.
+
+### 2.5.5 — AI Model Refresh [COMPLETED ✅]
+
+**Goal:** Stop shipping a deprecated default model id.
+
+**Achievements:**
+- Updated `.fortressci.yml` default from `claude-3-5-sonnet-20240620` to `claude-sonnet-4-5`.
+- Documented `FORTRESSCI_AI_MODEL` env-var override inline.
+
+---
+
 ## Long-Term Vision
 
 ### FortressCI Cloud (SaaS)

@@ -6,6 +6,24 @@ The format is based on Keep a Changelog, and the project follows Semantic Versio
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-05-19
+
+### Added
+- Added `ruff.toml` and a `ruff` + `ruff-format` pre-commit hook (rev `v0.6.9`) so Python scripts are linted alongside shell scripts. Config is intentionally conservative — pyflakes (`F`) and likely-bug rules (`B`) only, with `examples/` and `terraform/` excluded (intentionally vulnerable sample apps).
+- Added `--help`/`-h` flags to `scripts/auto-fix.sh`, `scripts/fortressci-init.sh`, and `scripts/generate_keys.sh` with usage docs covering arguments and examples.
+- Added bats test suites: `tests/bash/auto-fix.bats` (3 tests), `tests/bash/fortressci-init.bats` (4 tests), `tests/bash/generate-keys.bats` (4 tests) — total bash test count goes from 16 to 27.
+- Added overwrite protection to `scripts/generate_keys.sh` — refuses to clobber an existing `cosign.key`, and verifies cosign produced the expected output files.
+- Added a reminder line to `generate_keys.sh` advising users to `.gitignore` the private key.
+
+### Changed
+- Hardened `scripts/fortressci-init.sh` and `scripts/generate_keys.sh` with `set -euo pipefail` and explicit unknown-argument handling.
+- Hardened `integrations/mcp-server/server.py` with try/except around all file I/O (handles `FileNotFoundError`, `PermissionError`, `json.JSONDecodeError`, `OSError`) and added `logging`. Tool calls now return readable error strings instead of crashing the MCP server. Added `FORTRESSCI_WAIVERS_PATH` and `FORTRESSCI_MCP_LOG_LEVEL` env-var overrides.
+- Updated default AI model in `.fortressci.yml` from the deprecated `claude-3-5-sonnet-20240620` to `claude-sonnet-4-5`, with a comment pointing to `FORTRESSCI_AI_MODEL` env-var override.
+- Removed unused imports flagged by ruff: `sys` from `scripts/ai-triage.py`, `os` from `scripts/generate-report.py` and `scripts/summarize.py`.
+
+### Fixed
+- Removed a duplicate `# Detect CI platform` comment in `scripts/fortressci-init.sh`.
+
 ## [2.4.0] - 2026-03-25
 
 ### Changed

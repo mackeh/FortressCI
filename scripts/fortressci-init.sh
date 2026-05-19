@@ -3,12 +3,30 @@
 # FortressCI Init Script
 # Sets up FortressCI in a new project by generating tailored configurations.
 
+set -euo pipefail
+
+usage() {
+    cat <<'EOF'
+Usage: fortressci-init.sh [--ci <platform>] [-h|--help]
+
+Detects project language and CI platform, then copies tailored FortressCI
+templates into the current directory (workflow, pre-commit, waivers,
+policy, compliance-mappings, falco-rules, .fortressci.yml).
+
+Options:
+  --ci <platform>   Skip detection and force one of:
+                    github-actions | gitlab-ci | bitbucket | azure | jenkins | circleci
+  -h, --help        Show this help message and exit.
+EOF
+}
+
 # Parse arguments
 CI_ARG=""
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --ci) CI_ARG="$2"; shift ;;
-        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+        --ci) CI_ARG="${2:-}"; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) echo "Unknown parameter: $1" >&2; usage >&2; exit 1 ;;
     esac
     shift
 done
@@ -24,7 +42,6 @@ if [ -f "go.mod" ]; then echo "✓ Detected: Go"; LANG="go"; fi
 if [ -f "pom.xml" ] || [ -f "build.gradle" ]; then echo "✓ Detected: Java"; LANG="java"; fi
 if find . -maxdepth 5 -type f -name "*.bicep" | grep -q "."; then echo "✓ Detected: Bicep"; LANG="bicep"; fi
 
-# Detect CI platform
 # Detect CI platform
 CI="unknown"
 if [ -n "$CI_ARG" ]; then

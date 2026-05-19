@@ -1,6 +1,9 @@
 # FortressCI Roadmap
 
-> Last updated: March 25, 2026
+> Last updated: May 19, 2026
+
+> See [`ROADMAP.md`](./ROADMAP.md) for the deep-dive implementation guide.
+> This file is the high-level summary kept in sync with `CHANGELOG.md`.
 
 ---
 
@@ -70,6 +73,16 @@
 - Waiver governance: FCI-POL-005/006 enforcement, expired/expiring waiver visibility
 - Diff-aware PR scanning: skip irrelevant scanners based on changed file types
 - Expanded deterministic test suite: fixture-driven pytest and bats tests
+
+### v2.5.x — Script Hardening & Developer Experience (2026-05)
+
+- Python linting via `ruff` + `ruff-format` pre-commit hooks (`ruff.toml` config; pyflakes + bugbear rules)
+- `--help` / `-h` flag support across CLI scripts (`auto-fix.sh`, `fortressci-init.sh`, `generate_keys.sh`)
+- `set -euo pipefail` and explicit unknown-arg handling across previously-unsafe shell scripts
+- Cosign key generator: overwrite protection, post-generation output verification, `.gitignore` reminder
+- MCP server hardening: try/except around all file I/O, structured logging, env-var overrides for paths and log level
+- Refreshed default AI model (`claude-sonnet-4-5`) with env-var override (`FORTRESSCI_AI_MODEL`)
+- Bats test coverage extended from 16 to 27 tests (`auto-fix.bats`, `fortressci-init.bats`, `generate-keys.bats`)
 
 ---
 

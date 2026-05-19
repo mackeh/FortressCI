@@ -4,6 +4,29 @@
 
 set -euo pipefail
 
+usage() {
+    cat <<'EOF'
+Usage: auto-fix.sh [WORKSPACE] [DRY_RUN] [-h|--help]
+
+Applies automatic security remediations using available scanner CLIs
+(Snyk for dependencies, Checkov for IaC).
+
+Arguments:
+  WORKSPACE   Path to the workspace to fix (default: ".").
+  DRY_RUN     "true" to report intended changes only, "false" to apply
+              them (default: "false").
+
+Examples:
+  auto-fix.sh                # fix current dir, apply changes
+  auto-fix.sh . true         # dry-run on current dir
+  auto-fix.sh ./service-a    # apply changes to ./service-a
+EOF
+}
+
+case "${1:-}" in
+    -h|--help) usage; exit 0 ;;
+esac
+
 WORKSPACE=${1:-.}
 DRY_RUN=${2:-false}
 

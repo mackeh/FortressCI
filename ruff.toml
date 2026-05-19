@@ -1,0 +1,27 @@
+# FortressCI ruff config.
+# Conservative defaults — catch real bugs and dead code, leave style alone.
+
+line-length = 120
+target-version = "py39"
+
+extend-exclude = [
+    "results",
+    "results-*",
+    ".claude",
+    # Intentionally vulnerable sample apps — they exist as scanner targets.
+    "examples",
+    "terraform",
+]
+
+[lint]
+# Catch real bugs (pyflakes) and obvious likely-bug patterns (bugbear).
+# Style enforcement is deliberately minimal — FortressCI scripts use
+# compact `if cond: stmt` and other patterns we don't want to churn on.
+select = ["F", "B"]
+
+ignore = [
+    "B008",   # function calls in default args (used for argparse defaults)
+]
+
+[lint.per-file-ignores]
+"tests/**" = ["B"]

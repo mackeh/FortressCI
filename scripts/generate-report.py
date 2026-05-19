@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import json
 import sys
-import os
 from pathlib import Path
 from datetime import datetime
 from jinja2 import Template

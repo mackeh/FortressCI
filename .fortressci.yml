@@ -49,7 +49,8 @@ scanners:
 ai:
   enabled: false
   provider: anthropic
-  model: claude-3-5-sonnet-20240620
+  # Override via env var FORTRESSCI_AI_MODEL or change inline.
+  model: claude-sonnet-4-5
   explain_severity: [critical, high]
 
 adoption:

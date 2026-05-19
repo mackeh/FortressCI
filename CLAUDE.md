@@ -45,7 +45,7 @@ python3 scripts/summarize.py <results_dir>
 ./scripts/generate_keys.sh
 ```
 
-There are basic linters and script tests in CI (`actionlint`, `shellcheck`, `yamllint`, `pytest`, `bats`).
+There are basic linters and script tests in CI (`actionlint`, `shellcheck`, `yamllint`, `pytest`, `bats`). Python is also linted by `ruff` via the pre-commit hook (config in `ruff.toml`).
 
 ## Architecture
 
