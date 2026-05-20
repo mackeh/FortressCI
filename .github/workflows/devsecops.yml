@@ -36,10 +36,12 @@ jobs:
         id: changes
         run: |
           CHANGES=$(./scripts/changed-files.sh --base "$GITHUB_BASE_REF")
-          echo "has_source=$(echo "$CHANGES" | jq -r '.has_source')" >> "$GITHUB_OUTPUT"
-          echo "has_iac=$(echo "$CHANGES" | jq -r '.has_iac')" >> "$GITHUB_OUTPUT"
-          echo "has_container=$(echo "$CHANGES" | jq -r '.has_container')" >> "$GITHUB_OUTPUT"
-          echo "has_deps=$(echo "$CHANGES" | jq -r '.has_deps')" >> "$GITHUB_OUTPUT"
+          {
+            echo "has_source=$(echo "$CHANGES" | jq -r '.has_source')"
+            echo "has_iac=$(echo "$CHANGES" | jq -r '.has_iac')"
+            echo "has_container=$(echo "$CHANGES" | jq -r '.has_container')"
+            echo "has_deps=$(echo "$CHANGES" | jq -r '.has_deps')"
+          } >> "$GITHUB_OUTPUT"
           echo "📋 Changed file categories:"
           echo "$CHANGES" | jq .
 
@@ -138,7 +140,7 @@ jobs:
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         uses: trufflesecurity/trufflehog@abecab0d8fb9fb3e79366abc3909825488e9bb40 # v3.82.12
         with:
-          extra_args: --only-verified --since-commit HEAD
+          extra_args: --only-verified
 
   sast-scan:
     name: SAST (Semgrep)
