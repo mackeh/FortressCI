@@ -76,9 +76,23 @@ while IFS= read -r file; do
         *.py|*.js|*.ts|*.go|*.java|*.rb|*.php|*.cs|*.rs|*.c|*.cpp|*.h)
             has_source=true
             ;;
-        # IaC files
+        # Container files
+        Dockerfile*|docker-compose*|*.dockerfile)
+            has_container=true
+            ;;
+        # Dependency manifests (before generic YAML catch-all)
+        package.json|package-lock.json|yarn.lock|pnpm-lock.yaml|\
+        requirements.txt|Pipfile|Pipfile.lock|poetry.lock|\
+        go.mod|go.sum|Gemfile|Gemfile.lock|*.csproj|Cargo.toml|Cargo.lock)
+            has_deps=true
+            ;;
+        # CI/CD configs (before generic YAML catch-all)
+        .github/workflows/*|.gitlab-ci.yml|Jenkinsfile|bitbucket-pipelines.yml|\
+        azure-pipelines.yml|.circleci/*)
+            has_ci=true
+            ;;
+        # IaC and remaining YAML files
         *.tf|*.bicep|*.yaml|*.yml)
-            # YAML could be CI or IaC — check path
             case "$file" in
                 terraform/*|*.tf|*.bicep)
                     has_iac=true
@@ -90,21 +104,6 @@ while IFS= read -r file; do
                     has_iac=true  # Default YAML to IaC
                     ;;
             esac
-            ;;
-        # Container files
-        Dockerfile*|docker-compose*|*.dockerfile)
-            has_container=true
-            ;;
-        # Dependency manifests
-        package.json|package-lock.json|yarn.lock|pnpm-lock.yaml|\
-        requirements.txt|Pipfile|Pipfile.lock|poetry.lock|\
-        go.mod|go.sum|Gemfile|Gemfile.lock|*.csproj|Cargo.toml|Cargo.lock)
-            has_deps=true
-            ;;
-        # CI/CD configs
-        .github/workflows/*|.gitlab-ci.yml|Jenkinsfile|bitbucket-pipelines.yml|\
-        azure-pipelines.yml|.circleci/*)
-            has_ci=true
             ;;
     esac
 done <<< "$CHANGED_FILES"

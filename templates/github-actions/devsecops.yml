@@ -98,7 +98,7 @@ jobs:
         with:
           name: snyk.sarif
           path: snyk.sarif
-      
+
       - name: Upload Security SARIF (CodeQL)
         uses: github/codeql-action/upload-sarif@v3
         if: always()
@@ -126,7 +126,7 @@ jobs:
         with:
           directory: .
           quiet: true
-          soft_fail: false 
+          soft_fail: false
           output_format: sarif
           output_file_path: checkov.sarif
 
@@ -163,7 +163,7 @@ jobs:
         if: ${{ secrets.INFRACOST_API_KEY != '' }}
         run: |
           infracost breakdown --path ./terraform --format json --out-file infracost-usage.json
-          
+
       - name: Post Infracost Comment
         if: github.event_name == 'pull_request' && secrets.INFRACOST_API_KEY != ''
         env:
@@ -227,7 +227,7 @@ jobs:
           if [[ -z "$COSIGN_PRIVATE_KEY" ]]; then
             echo "Skipping signing: COSIGN_PRIVATE_KEY not set."
           else
-            # In a real pipeline, you'd push to a registry first. 
+            # In a real pipeline, you'd push to a registry first.
             # For this demo, we mock the signing step or sign a local tag if supported (Cosign usually needs a registry).
             echo "Cosign key detected. In a real pipeline, we would run:"
             echo "cosign sign --key env://COSIGN_PRIVATE_KEY my-registry/my-app:${{ github.sha }}"
@@ -262,7 +262,7 @@ jobs:
           # Run detached, map internal 3000 to host 3000
           docker run -d -p 3000:3000 --name test-app my-app:${{ github.sha }}
           # Wait for app to start (simple sleep or healthcheck loop)
-          sleep 5 
+          sleep 5
 
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.9.0
@@ -270,7 +270,7 @@ jobs:
         with:
           target: 'http://localhost:3000'
           fail_action: false # Don't fail the action immediately, check report later
-          
+
       # Note: ZAP action outputs artifacts automatically (zap_report.html)
 
   compliance-audit:
@@ -307,7 +307,7 @@ jobs:
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
-           merge-multiple: true
+          merge-multiple: true
 
       - name: Post Summary to PR
         uses: actions/github-script@v6

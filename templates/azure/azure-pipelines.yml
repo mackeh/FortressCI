@@ -61,22 +61,20 @@ stages:
         set -euo pipefail
         export RESULTS_DIR="$(resultsDir)"
         if [ -f "${RESULTS_DIR}/adoption-roadmap.json" ]; then
-          python3 - <<'PY'
-import json
-import os
-from pathlib import Path
-
-roadmap_path = Path(os.environ["RESULTS_DIR"]) / "adoption-roadmap.json"
-roadmap = json.loads(roadmap_path.read_text(encoding="utf-8"))
-scores = roadmap.get("scores", {})
-actions = roadmap.get("recommended_actions", [])[:3]
-
-print("DevSecOps maturity:", scores.get("devsecops_maturity"))
-print("Adoption feasibility:", scores.get("adoption_feasibility"))
-print("Top actions:")
-for action in actions:
-    print(f"- {action.get('title')} (priority {action.get('priority')})")
-PY
+          python3 -c '
+        import json
+        import os
+        from pathlib import Path
+        roadmap_path = Path(os.environ["RESULTS_DIR"]) / "adoption-roadmap.json"
+        roadmap = json.loads(roadmap_path.read_text(encoding="utf-8"))
+        scores = roadmap.get("scores", {})
+        actions = roadmap.get("recommended_actions", [])[:3]
+        print("DevSecOps maturity:", scores.get("devsecops_maturity"))
+        print("Adoption feasibility:", scores.get("adoption_feasibility"))
+        print("Top actions:")
+        for action in actions:
+            print("- {} (priority {})".format(action.get("title"), action.get("priority")))
+        '
         else
           echo "No adoption roadmap generated."
         fi

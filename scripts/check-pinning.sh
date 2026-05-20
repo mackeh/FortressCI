@@ -12,7 +12,6 @@ set -euo pipefail
 CHECK_ACTIONS=true
 CHECK_DOCKER=true
 STRICT=false
-ISSUES=0
 WARNINGS=0
 
 while [[ $# -gt 0 ]]; do
@@ -35,7 +34,6 @@ if [ "$CHECK_ACTIONS" = true ] && [ -d ".github/workflows" ]; then
     echo "📋 Checking GitHub Actions pinning..."
     echo ""
 
-    UNPINNED=""
     while IFS= read -r line; do
         # Extract the action reference from the line
         # line is in format: filename:lineno:uses: action
